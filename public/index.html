@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Management System | Campus Academic LMS</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- ====================================================================
+             SIDEBAR NAVIGATION
+             ==================================================================== -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="brand-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <h1>CampusLib LMS</h1>
+                    <span>Library Circulation Desk</span>
+                </div>
+            </div>
+
+            <div class="sidebar-section-title">Core Operations</div>
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-view="dashboard">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    <span>Dashboard</span>
+                </button>
+
+                <button class="nav-item" data-view="books">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                    </svg>
+                    <span>Book Catalog</span>
+                </button>
+
+                <button class="nav-item" data-view="members">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <span>Members Directory</span>
+                </button>
+
+                <div class="sidebar-section-title">Circulation</div>
+
+                <button class="nav-item" data-view="issue">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                    </svg>
+                    <span>Issue Book</span>
+                </button>
+
+                <button class="nav-item" data-view="return">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    <span>Return & Fines</span>
+                </button>
+
+                <button class="nav-item" data-view="overdue">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>Overdue Books</span>
+                    <span class="nav-badge" id="sidebar-overdue-badge">0</span>
+                </button>
+
+                <button class="nav-item" data-view="transactions">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    </svg>
+                    <span>Transaction History</span>
+                </button>
+
+                <div class="sidebar-section-title">Reports & Viva</div>
+
+                <button class="nav-item" data-view="reports">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <span>Reports & Summaries</span>
+                </button>
+
+                <button class="nav-item" data-view="viva">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                    </svg>
+                    <span>DBMS Schema & Viva</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="staff-info-card">
+                    <div class="staff-avatar" id="sidebar-staff-avatar">RS</div>
+                    <div class="staff-details">
+                        <div class="staff-name" id="sidebar-staff-name">Dr. Rajesh Sharma</div>
+                        <div class="staff-role-badge" id="sidebar-staff-role">Senior Librarian (Admin)</div>
+                    </div>
+                    <button class="btn btn-sm btn-outline" id="btn-open-auth" title="Switch Staff or Logout" style="padding: 4px; background: transparent; border-color: rgba(255,255,255,0.2); color: #fff;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:14px;height:14px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ====================================================================
+             MAIN WRAPPER & TOPBAR
+             ==================================================================== -->
+        <div class="main-wrapper">
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="mobile-menu-btn" id="mobile-toggle" aria-label="Toggle menu">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:20px;height:20px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+
+                    <div class="global-search-box">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <input type="text" id="global-search-input" placeholder="Search catalog by title, author, ISBN or member...">
+                    </div>
+                </div>
+
+                <div class="topbar-right">
+                    <div class="system-date-pill">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span id="current-date-display">Today</span>
+                    </div>
+
+                    <button class="btn-viva-helper" id="btn-viva-modal">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:14px;height:14px;color:var(--accent-600)">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Viva Demo Scenarios</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- ====================================================================
+                 PAGE CONTAINER & DYNAMIC VIEWS
+                 ==================================================================== -->
+            <main class="page-container" id="main-content">
+                
+                <!-- VIEW 1: DASHBOARD -->
+                <section id="view-dashboard" class="page-view">
+                    <div class="page-header">
+                        <div class="page-title-group">
+                            <h2>Librarian Operations Dashboard</h2>
+                            <p>Real-time circulation metrics, loan warnings, and recent academic library transactions</p>
+                        </div>
+                        <div class="page-actions">
+                            <button class="btn btn-outline" onclick="App.navigate('return')">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                                <span>Quick Return</span>
+                            </button>
+                            <button class="btn btn-primary" onclick="App.navigate('issue')">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+                                <span>Issue Book</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Metrics Grid -->
+                    <div class="metrics-grid">
+                        <div class="stat-card">
+                            <div class="stat-content">
+                                <div class="stat-label">Total Catalog Titles</div>
+                                <div class="stat-value" id="stat-total-titles">--</div>
+                                <div class="stat-subtext" id="stat-total-copies">-- total physical copies</div>
+                            </div>
+                            <div class="stat-icon navy">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-content">
+                                <div class="stat-label">Available on Shelf</div>
+                                <div class="stat-value text-success" id="stat-available-copies">--</div>
+                                <div class="stat-subtext text-success">Ready for loan</div>
+                            </div>
+                            <div class="stat-icon green">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-content">
+                                <div class="stat-label">Currently Issued</div>
+                                <div class="stat-value" id="stat-issued-copies">--</div>
+                                <div class="stat-subtext text-warning" id="stat-active-loans">-- active loan records</div>
+                            </div>
+                            <div class="stat-icon amber">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-content">
+                                <div class="stat-label">Overdue Books</div>
+                                <div class="stat-value text-danger" id="stat-overdue-loans">--</div>
+                                <div class="stat-subtext text-danger" id="stat-pending-fines">₹-- pending late fines</div>
+                            </div>
+                            <div class="stat-icon red">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-content">
+                                <div class="stat-label">Registered Members</div>
+                                <div class="stat-value" id="stat-total-members">--</div>
+                                <div class="stat-subtext text-success" id="stat-active-members">-- active cardholders</div>
+                            </div>
+                            <div class="stat-icon slate">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Split View: Recently Issued & Due Alert / Activity -->
+                    <div class="dashboard-grid">
+                        <!-- Left Panel: Recently Issued Books -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    <span>Recently Issued Books</span>
+                                </div>
+                                <button class="btn btn-sm btn-outline" onclick="App.navigate('transactions')">View All</button>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Book Title</th>
+                                                <th>Borrower</th>
+                                                <th>Issue Date</th>
+                                                <th>Due Date</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="dashboard-recent-issues-table">
+                                            <tr><td colspan="5" class="empty-state">Loading recent issues...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Overdue / Due This Week Alerts -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                                    <span>Circulation Alerts</span>
+                                </div>
+                                <button class="btn btn-sm btn-outline" onclick="App.navigate('overdue')">Overdue List</button>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Book & Borrower</th>
+                                                <th>Due Date</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="dashboard-alerts-table">
+                                            <tr><td colspan="3" class="empty-state">No urgent loan alerts.</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Grid: Library Activity Feed & Genre Distribution -->
+                    <div class="dashboard-grid">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                                    <span>Library Audit & Activity Log</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <ul class="activity-list" id="dashboard-activity-list">
+                                    <li>Loading activity...</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" /></svg>
+                                    <span>Subject / Genre Distribution</span>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Category</th>
+                                                <th>Titles</th>
+                                                <th>Total Copies</th>
+                                                <th>Available</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="dashboard-genre-table">
+                                            <tr><td colspan="4" class="empty-state">Loading categories...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 2: BOOK CATALOG -->
+                <section id="view-books" class="page-view" style="display:none;">
+                    <div class="page-header">
+                        <div class="page-title-group">
+                            <h2>Book Catalog Management</h2>
+                            <p>Search, filter, inspect physical shelf locations, and manage title inventory</p>
+                        </div>
+                        <div class="page-actions">
+                            <button class="btn btn-primary" id="btn-add-book">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+                                <span>Add New Book</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filter Bar -->
+                    <div class="filter-bar">
+                        <div class="search-input-group">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                            <input type="text" id="books-search-input" placeholder="Search by title, author, ISBN, publisher...">
+                        </div>
+
+                        <select id="books-genre-filter" class="filter-select">
+                            <option value="All">All Categories</option>
+                        </select>
+
+                        <select id="books-avail-filter" class="filter-select">
+                            <option value="all">All Availability</option>
+                            <option value="available">In Stock (> 0)</option>
+                            <option value="unavailable">Out of Stock (0)</option>
+                        </select>
+
+                        <select id="books-sort-filter" class="filter-select">
+                            <option value="title:ASC">Sort: Title (A-Z)</option>
+                            <option value="title:DESC">Sort: Title (Z-A)</option>
+                            <option value="author:ASC">Sort: Author</option>
+                            <option value="available_copies:DESC">Sort: Copies Available</option>
+                        </select>
+                    </div>
+
+                    <!-- Books Table -->
+                    <div class="card">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ISBN</th>
+                                            <th>Title & Author</th>
+                                            <th>Category</th>
+                                            <th>Publisher / Year</th>
+                                            <th>Shelf Location</th>
+                                            <th>Copies (Avail / Total)</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="books-table-body">
+                                        <tr><td colspan="8" class="empty-state">Loading books...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 3: MEMBERS DIRECTORY -->
+                <section id="view-members" class="page-view" style="display:none;">
+                    <div class="page-header">
+                        <div class="page-title-group">
+                            <h2>Library Members Directory</h2>
+                            <p>Manage student, faculty, and research scholar memberships and active borrowing limits</p>
+                        </div>
+                        <div class="page-actions">
+                            <button class="btn btn-primary" id="btn-add-member">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" /></svg>
+                                <span>Register Member</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Filter Bar -->
+                    <div class="filter-bar">
+                        <div class="search-input-group">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                            <input type="text" id="members-search-input" placeholder="Search by name, student code, email, phone...">
+                        </div>
+
+                        <select id="members-status-filter" class="filter-select">
+                            <option value="All">All Statuses</option>
+                            <option value="Active">Active</option>
+                            <option value="Suspended">Suspended</option>
+                        </select>
+
+                        <select id="members-type-filter" class="filter-select">
+                            <option value="All">All Member Types</option>
+                            <option value="Student">Student</option>
+                            <option value="Faculty">Faculty</option>
+                            <option value="Researcher">Researcher</option>
+                        </select>
+                    </div>
+
+                    <!-- Members Table -->
+                    <div class="card">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Member Code</th>
+                                            <th>Full Name</th>
+                                            <th>Contact Info</th>
+                                            <th>Type</th>
+                                            <th>Membership Date</th>
+                                            <th>Holding / Limit</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="members-table-body">
+                                        <tr><td colspan="8" class="empty-state">Loading members...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 4: CIRCULATION DESK (ISSUE BOOK) -->
+                <section id="view-issue" class="page-view" style="display:none;">
+                    <div class="page-header">
+                        <div class="page-title-group">
+                            <h2>Circulation Desk — Issue Book</h2>
+                            <p>Verify copy availability, check member eligibility, and record new loan</p>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <!-- Issue Form -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                    <span>Loan Issue Entry Form</span>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <form id="form-issue-book">
+                                    <div class="form-group">
+                                        <label class="form-label">Select Book <span class="required">*</span></label>
+                                        <select id="issue-book-select" class="form-control" required>
+                                            <option value="">-- Choose a title from catalog --</option>
+                                        </select>
+                                        <small id="issue-book-stock-hint" style="font-size:0.75rem; color:var(--text-muted); margin-top:4px; display:block;"></small>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Select Member <span class="required">*</span></label>
+                                        <select id="issue-member-select" class="form-control" required>
+                                            <option value="">-- Choose registered student / faculty --</option>
+                                        </select>
+                                        <small id="issue-member-hint" style="font-size:0.75rem; color:var(--text-muted); margin-top:4px; display:block;"></small>
+                                    </div>
+
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label class="form-label">Issue Date</label>
+                                            <input type="date" id="issue-date-input" class="form-control" readonly>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="form-label">Loan Duration (Days) <span class="required">*</span></label>
+                                            <select id="issue-days-select" class="form-control">
+                                                <option value="14" selected>14 Days (Standard Student Loan)</option>
+                                                <option value="7">7 Days (Short Reserve)</option>
+                                                <option value="30">30 Days (Faculty / Research Extended)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Remarks / Circulation Notes</label>
+                                        <input type="text" id="issue-remarks-input" class="form-control" placeholder="e.g. Regular course reference, Mid-term study">
+                                    </div>
+
+                                    <div style="display:flex; justify-content:flex-end; gap:0.75rem; margin-top:1.5rem;">
+                                        <button type="reset" class="btn btn-outline">Clear</button>
+                                        <button type="submit" class="btn btn-primary" id="btn-submit-issue">
+                                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                            <span>Complete Book Issue</span>
+                                        </button>
+                                    </div>
+                                </form>
+
+                                <div id="issue-success-slip" style="display:none;" class="slip-box">
+                                    <div class="slip-title">CAMPUS CENTRAL LIBRARY - ISSUE SLIP</div>
+                                    <div id="slip-content"></div>
+                                    <div style="text-align:right; margin-top:8px;">
+                                        <button class="btn btn-sm btn-outline" onclick="window.print()">Print Slip</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Circulation Desk Rules & Guidelines -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    <span>Circulation Desk Validation Rules</span>
+                                </div>
+                            </div>
+                            <div class="card-body" style="font-size:0.85rem; color:var(--text-secondary); line-height:1.7;">
+                                <p><strong>1. Physical Copy Validation:</strong> The system strictly blocks issuing any title when <code>available_copies = 0</code>.</p>
+                                <p style="margin-top:0.5rem;"><strong>2. Active Member Status:</strong> Suspended or expired cardholders cannot borrow books until clearance.</p>
+                                <p style="margin-top:0.5rem;"><strong>3. Quota Constraint:</strong> Students can borrow a maximum of 4 books simultaneously; Faculty are permitted 8 books.</p>
+                                <p style="margin-top:0.5rem;"><strong>4. Automatic Stock Update:</strong> The book's <code>available_copies</code> attribute is automatically decremented atomically within an ACID transaction.</p>
+                                <p style="margin-top:0.5rem;"><strong>5. Overdue Fine Policy:</strong> Late returns accrue a penalty of <strong>₹5.00 / day</strong> past the recorded due date.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 5: RETURN BOOKS & FINES -->
+                <section id="view-return" class="page-view" style="display:none;">
+                    <div class="page-header">
+                        <div class="page-title-group">
+                            <h2>Return Desk & Fine Settlement</h2>
+                            <p>Process book returns, auto-calculate overdue fines, and update library catalog availability</p>
+                        </div>
+                    </div>
+
+                    <!-- Fast Return Search Bar -->
+                    <div class="card" style="margin-bottom:1.5rem;">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                <span>Look up Active Loan for Return</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="search-input-group">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                <input type="text" id="return-search-input" placeholder="Type member name, student code, book title, or ISBN to find loan...">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Active Loans Pending Return Table -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <span>Active Loans Currently in Circulation</span>
+                            </div>
+                            <span class="badge badge-neutral" id="active-loans-count-badge">0 Active</span>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Loan ID</th>
+                                            <th>Book Title & ISBN</th>
+                                            <th>Borrower</th>
+                                            <th>Issue Date</th>
+                                            <th>Due Date</th>
+                                            <th>Status / Overdue Fine</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="return-loans-table-body">
+                                        <tr><td colspan="7" class="empty-state">Loading active loans...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 6: OVERDUE MANAGEMENT -->
+                <section id="view-overdue" class="page-view" style="display:none;">
+                    <div class="page-header">
+                        <div class="page-title-group">
+                            <h2>Overdue Loans & Fine Recovery</h2>
+                            <p>Identify delinquent accounts, inspect computed late fees (₹5/day), and dispatch reminder notices</p>
+                        </div>
+                    </div>
+
+                    <!-- Summary alert cards -->
+                    <div class="metrics-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+                        <div class="stat-card">
+                            <div class="stat-content">
+                                <div class="stat-label">Total Overdue Records</div>
+                                <div class="stat-value text-danger" id="overdue-total-count">0</div>
+                                <div class="stat-subtext">Active loans past deadline</div>
+                            </div>
+                            <div class="stat-icon red">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            </div>
+                        </div>
+
+                        <div class="stat-card">
+                            <div class="stat-content">
+                                <div class="stat-label">Accumulated Late Fines</div>
+                                <div class="stat-value text-danger" id="overdue-total-fines">₹0.00</div>
+                                <div class="stat-subtext">Calculated at standard ₹5.00 / day</div>
+                            </div>
+                            <div class="stat-icon amber">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Overdue Table -->
+                    <div class="card">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Loan ID</th>
+                                            <th>Borrower Name & Phone</th>
+                                            <th>Book Title & ISBN</th>
+                                            <th>Due Date</th>
+                                            <th>Days Overdue</th>
+                                            <th>Fine Accrued</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="overdue-table-body">
+                                        <tr><td colspan="7" class="empty-state">No overdue loans found.</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 7: TRANSACTION HISTORY -->
+                <section id="view-transactions" class="page-view" style="display:none;">
+                    <div class="page-header">
+                        <div class="page-title-group">
+                            <h2>Circulation Transaction History</h2>
+                            <p>Complete historical log of all book issues, returns, extensions, and fine receipts</p>
+                        </div>
+                        <div class="page-actions">
+                    <button class="btn btn-outline" onclick="App.exportCsvReport()">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                        <span>Export CSV Report</span>
+                    </button>
+                    <button class="btn btn-outline" onclick="window.print()">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                        <span>Print Log</span>
+                    </button>
+                        </div>
+                    </div>
+
+                    <!-- Filter Bar -->
+                    <div class="filter-bar">
+                        <div class="search-input-group">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                            <input type="text" id="transactions-search-input" placeholder="Search by book title, member name, student code, ISBN...">
+                        </div>
+
+                        <select id="transactions-status-filter" class="filter-select">
+                            <option value="All">All Statuses</option>
+                            <option value="Issued">Active (Issued)</option>
+                            <option value="Returned">Returned</option>
+                            <option value="Overdue">Overdue</option>
+                        </select>
+                    </div>
+
+                    <!-- Transactions Table -->
+                    <div class="card">
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Loan ID</th>
+                                            <th>Book Title</th>
+                                            <th>Member Name</th>
+                                            <th>Issue Date</th>
+                                            <th>Due Date</th>
+                                            <th>Return Date</th>
+                                            <th>Fine Status</th>
+                                            <th>Loan Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="transactions-table-body">
+                                        <tr><td colspan="8" class="empty-state">Loading transactions...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 8: REPORTS & ANALYTICS -->
+                <section id="view-reports" class="page-view" style="display:none;">
+                    <div class="page-header">
+                        <div class="page-title-group">
+                            <h2>Library Analytics & Summary Reports</h2>
+                            <p>Institutional circulation patterns, most borrowed academic literature, and inventory audit</p>
+                        </div>
+                        <div class="page-actions">
+                            <button class="btn btn-outline" onclick="window.print()">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                                <span>Export / Print Report</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <!-- Top 5 Most Borrowed Books -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" /></svg>
+                                    <span>Top 5 Most Borrowed Books</span>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Title & Author</th>
+                                                <th>Category</th>
+                                                <th>Times Borrowed</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="reports-popular-books">
+                                            <tr><td colspan="3" class="empty-state">Loading popular books...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Top Active Borrowers -->
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                                    <span>Top Active Borrowers</span>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Member Code</th>
+                                                <th>Full Name</th>
+                                                <th>Type</th>
+                                                <th>Total Loans</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="reports-top-borrowers">
+                                            <tr><td colspan="4" class="empty-state">Loading active borrowers...</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Physical Inventory Breakdown -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                <span>Institutional Collection Health & Inventory Summary</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="metrics-grid" style="margin-bottom:0;">
+                                <div class="stat-card">
+                                    <div class="stat-content">
+                                        <div class="stat-label">Total Distinct Titles</div>
+                                        <div class="stat-value" id="report-inv-titles">--</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-content">
+                                        <div class="stat-label">Total Volumes in Stock</div>
+                                        <div class="stat-value" id="report-inv-volumes">--</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-content">
+                                        <div class="stat-label">Volumes in Circulation</div>
+                                        <div class="stat-value text-warning" id="report-inv-circ">--</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-content">
+                                        <div class="stat-label">Collected Fine Revenue</div>
+                                        <div class="stat-value text-success" id="report-fines-collected">₹--</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- VIEW 9: DBMS SCHEMA & VIVA EXPLANATION -->
+                <section id="view-viva" class="page-view" style="display:none;">
+                    <div class="page-header">
+                        <div class="page-title-group">
+                            <h2>DBMS Course Project Architecture & Viva Guide</h2>
+                            <p>Relational model specifications, normalization, integrity constraints, and query documentation</p>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" /></svg>
+                                    <span>Relational Schema (Based on Draw.io ER Design)</span>
+                                </div>
+                            </div>
+                            <div class="card-body" style="font-size:0.85rem; line-height:1.7;">
+                                <p><strong>1. BOOK</strong> (<u>book_id</u>, <em>isbn</em>, title, author, publisher, publication_year, genre, total_copies, available_copies, shelf_location)</p>
+                                <p><strong>2. MEMBER</strong> (<u>member_id</u>, <em>member_code</em>, full_name, <em>email</em>, phone, address, membership_type, membership_date, status, max_borrow_limit)</p>
+                                <p><strong>3. STAFF</strong> (<u>staff_id</u>, <em>staff_code</em>, full_name, <em>email</em>, phone, role, hire_date, password, status)</p>
+                                <p><strong>4. LOAN</strong> (<u>loan_id</u>, <em>#book_id</em>, <em>#member_id</em>, <em>#staff_id</em>, issue_date, due_date, return_date, status, fine_amount, fine_paid, remarks)</p>
+                                <p><strong>5. RESERVATION</strong> (<u>reservation_id</u>, <em>#book_id</em>, <em>#member_id</em>, reservation_date, status)</p>
+                                <p><strong>6. AUDIT_LOGS</strong> (<u>log_id</u>, action_type, description, staff_name, timestamp)</p>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                                    <span>Relational Integrity & Normalization</span>
+                                </div>
+                            </div>
+                            <div class="card-body" style="font-size:0.85rem; line-height:1.7;">
+                                <p><strong>Normalization (3NF / BCNF):</strong> All attributes depend directly on the primary key (no partial or transitive functional dependencies). Multi-valued attributes like multiple copies are managed via normalized counts and distinct loan transactions.</p>
+                                <p style="margin-top:0.5rem;"><strong>ACID Transaction Guarantee:</strong> During loan issue, book stock reduction and loan record insertion run inside a single atomic transaction. If stock check fails, the transaction is rolled back immediately.</p>
+                                <p style="margin-top:0.5rem;"><strong>Integrity Constraints:</strong> <code>CHECK(available_copies &lt;= total_copies)</code>, <code>FOREIGN KEY ... ON DELETE RESTRICT</code> prevents orphaned loan history.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- ====================================================================
+         MODALS
+         ==================================================================== -->
+
+    <!-- 1. Add / Edit Book Modal -->
+    <div class="modal-backdrop" id="modal-book">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-book-title">Add New Book to Catalog</h3>
+                <button class="modal-close-btn" onclick="App.closeModal('modal-book')">&times;</button>
+            </div>
+            <form id="form-book">
+                <input type="hidden" id="book-form-id">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">ISBN <span class="required">*</span></label>
+                            <input type="text" id="book-isbn" class="form-control" placeholder="978-0133970777" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Category / Genre <span class="required">*</span></label>
+                            <input type="text" id="book-genre" class="form-control" placeholder="Computer Science" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Book Title <span class="required">*</span></label>
+                        <input type="text" id="book-title" class="form-control" placeholder="Fundamentals of Database Systems" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Author(s) <span class="required">*</span></label>
+                        <input type="text" id="book-author" class="form-control" placeholder="Ramez Elmasri & Shamkant Navathe" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Publisher</label>
+                            <input type="text" id="book-publisher" class="form-control" placeholder="Pearson">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Publication Year</label>
+                            <input type="number" id="book-year" class="form-control" placeholder="2016" min="1800" max="2099">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Total Copies <span class="required">*</span></label>
+                            <input type="number" id="book-copies" class="form-control" min="1" max="100" value="5" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Shelf Location</label>
+                            <input type="text" id="book-shelf" class="form-control" placeholder="Shelf CS-01">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="App.closeModal('modal-book')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-save-book">Save Book</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. Register / Edit Member Modal -->
+    <div class="modal-backdrop" id="modal-member">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-member-title">Register New Library Cardholder</h3>
+                <button class="modal-close-btn" onclick="App.closeModal('modal-member')">&times;</button>
+            </div>
+            <form id="form-member">
+                <input type="hidden" id="member-form-id">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Full Name <span class="required">*</span></label>
+                        <input type="text" id="member-name" class="form-control" placeholder="e.g. Tushar Saini" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Email Address <span class="required">*</span></label>
+                            <input type="email" id="member-email" class="form-control" placeholder="tushar.saini@student.edu" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Phone Number <span class="required">*</span></label>
+                            <input type="text" id="member-phone" class="form-control" placeholder="+91 98711 22334" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Membership Category</label>
+                            <select id="member-type" class="form-control">
+                                <option value="Student">Student (Max 4 Books)</option>
+                                <option value="Faculty">Faculty (Max 8 Books)</option>
+                                <option value="Researcher">Researcher (Max 6 Books)</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="group-member-status" style="display:none;">
+                            <label class="form-label">Account Status</label>
+                            <select id="member-status" class="form-control">
+                                <option value="Active">Active</option>
+                                <option value="Suspended">Suspended</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Campus / Residential Address</label>
+                        <input type="text" id="member-address" class="form-control" placeholder="Hostel Block B, Room 204, Campus">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="App.closeModal('modal-member')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-save-member">Register Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. Return & Settle Fine Modal -->
+    <div class="modal-backdrop" id="modal-return">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3 class="modal-title">Process Return & Settle Account</h3>
+                <button class="modal-close-btn" onclick="App.closeModal('modal-return')">&times;</button>
+            </div>
+            <form id="form-process-return">
+                <input type="hidden" id="return-loan-id">
+                <div class="modal-body">
+                    <div id="return-loan-summary" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:12px; margin-bottom:15px; font-size:0.85rem;">
+                    </div>
+
+                    <div id="return-fine-alert" style="display:none; background:#fef2f2; border:1px solid #fee2e2; border-radius:6px; padding:12px; margin-bottom:15px; color:#b91c1c;">
+                        <strong id="return-fine-text">Late Fine Due: ₹0.00</strong>
+                        <div style="margin-top:8px;">
+                            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:0.825rem;">
+                                <input type="checkbox" id="return-fine-paid-checkbox" checked>
+                                <span>Mark fine as collected from member now</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Return Inspection Remarks</label>
+                        <input type="text" id="return-remarks" class="form-control" placeholder="e.g. Returned in good condition, no damage">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="App.closeModal('modal-return')">Cancel</button>
+                    <button type="submit" class="btn btn-success" id="btn-confirm-return">Confirm Return</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4. Staff Account / Login & Role Switcher Modal -->
+    <div class="modal-backdrop" id="modal-auth">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3 class="modal-title">Staff Authentication & Role Access</h3>
+                <button class="modal-close-btn" onclick="App.closeModal('modal-auth')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Current Logged In Profile -->
+                <div style="background:var(--bg-subtle); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:1rem; margin-bottom:1.25rem; display:flex; align-items:center; justify-content:space-between;">
+                    <div>
+                        <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); font-weight:600;">Current Session</div>
+                        <div style="font-weight:700; color:var(--text-primary); font-size:0.95rem;" id="modal-current-user-name">Dr. Rajesh Sharma</div>
+                        <div style="font-size:0.75rem; color:var(--primary-700); font-weight:600;" id="modal-current-user-role">Role: Admin (STF-101)</div>
+                    </div>
+                    <button class="btn btn-sm btn-outline" style="color:var(--danger-600); border-color:#fca5a5;" onclick="App.handleLogout()">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+                        <span>Log Out</span>
+                    </button>
+                </div>
+
+                <!-- Login Form -->
+                <form id="form-staff-login" style="margin-bottom:1.5rem; border-bottom:1px solid var(--border-subtle); padding-bottom:1.25rem;">
+                    <div style="font-size:0.85rem; font-weight:700; margin-bottom:0.75rem; color:var(--text-primary);">Log In with Staff Credentials</div>
+                    <div class="form-group">
+                        <label class="form-label">Email or Staff Code <span class="required">*</span></label>
+                        <input type="text" id="login-username" class="form-control" placeholder="admin@library.edu or STF-101" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password <span class="required">*</span></label>
+                        <input type="password" id="login-password" class="form-control" placeholder="••••••••" required>
+                    </div>
+                    <div style="display:flex; justify-content:flex-end;">
+                        <button type="submit" class="btn btn-primary" id="btn-submit-login">Log In</button>
+                    </div>
+                </form>
+
+                <!-- Quick Switch Profiles for Demonstration -->
+                <div style="font-size:0.85rem; font-weight:700; margin-bottom:0.5rem; color:var(--text-primary);">Quick-Switch Staff Demo Profiles</div>
+                <div style="display:flex; flex-direction:column; gap:0.6rem;" id="staff-accounts-list">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="App.closeModal('modal-auth')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. Examiner Viva Demo Scenarios Modal -->
+    <div class="modal-backdrop" id="modal-viva">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3 class="modal-title">Project Demonstration Scenarios (Viva Presets)</h3>
+                <button class="modal-close-btn" onclick="App.closeModal('modal-viva')">&times;</button>
+            </div>
+            <div class="modal-body" style="font-size:0.85rem; line-height:1.6;">
+                <p style="color:var(--text-secondary); margin-bottom:1rem;">
+                    Click any test scenario to demonstrate the DBMS integrity constraints and business rules to the professor:
+                </p>
+
+                <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                    <div style="border:1px solid var(--border-subtle); padding:10px; border-radius:6px; display:flex; align-items:center; justify-content:space-between;">
+                        <div>
+                            <strong>1. Test Stock Constraint:</strong>
+                            <div style="color:var(--text-muted); font-size:0.78rem;">Attempt to issue when available copies = 0 (CLRS Algorithms or AI)</div>
+                        </div>
+                        <button class="btn btn-sm btn-outline" onclick="App.demoScenario('stock_check')">Run Test</button>
+                    </div>
+
+                    <div style="border:1px solid var(--border-subtle); padding:10px; border-radius:6px; display:flex; align-items:center; justify-content:space-between;">
+                        <div>
+                            <strong>2. Test Overdue Fine Calculation:</strong>
+                            <div style="color:var(--text-muted); font-size:0.78rem;">Inspect overdue loans with dynamically computed ₹5/day fine</div>
+                        </div>
+                        <button class="btn btn-sm btn-outline" onclick="App.demoScenario('fine_calc')">Inspect</button>
+                    </div>
+
+                    <div style="border:1px solid var(--border-subtle); padding:10px; border-radius:6px; display:flex; align-items:center; justify-content:space-between;">
+                        <div>
+                            <strong>3. Test Suspended Member Restriction:</strong>
+                            <div style="color:var(--text-muted); font-size:0.78rem;">Verify system blocks loans to suspended members (Priya Kapoor)</div>
+                        </div>
+                        <button class="btn btn-sm btn-outline" onclick="App.demoScenario('suspended_member')">Run Test</button>
+                    </div>
+
+                    <div style="border:1px solid var(--border-subtle); padding:10px; border-radius:6px; display:flex; align-items:center; justify-content:space-between;">
+                        <div>
+                            <strong>4. Reset Database to Clean Demo State:</strong>
+                            <div style="color:var(--text-muted); font-size:0.78rem;">Restore fresh books, members, and loans for a clean demo</div>
+                        </div>
+                        <button class="btn btn-sm btn-danger" onclick="App.resetDemoData()">Reset Data</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" onclick="App.closeModal('modal-viva')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
