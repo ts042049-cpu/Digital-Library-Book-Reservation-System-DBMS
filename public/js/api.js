@@ -195,6 +195,9 @@ const ApiService = {
         getAll(filters = {}) {
             return ApiService.get('/api/loans', filters);
         },
+        getById(id) {
+            return ApiService.get(`/api/loans/${id}`);
+        },
         issue(loanData) {
             return ApiService.post('/api/loans/issue', loanData);
         },

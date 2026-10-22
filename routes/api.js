@@ -630,8 +630,8 @@ router.get('/loans', (req, res) => {
         `;
         const params = [];
 
-        if (status && status !== 'All') {
-            query += ` AND l.status = ?`;
+        if (status && status.toLowerCase() !== 'all') {
+            query += ` AND LOWER(l.status) = LOWER(?)`;
             params.push(status);
         }
 
@@ -647,6 +647,32 @@ router.get('/loans', (req, res) => {
         res.json({ success: true, count: loans.length, loans });
     } catch (err) {
         res.status(500).json({ success: false, message: 'Database error fetching circulation records' });
+    }
+});
+
+router.get('/loans/:id', (req, res) => {
+    try {
+        updateOverdueLoans();
+        const loanId = req.params.id;
+        const loan = db.prepare(`
+            SELECT l.*,
+                   b.title as book_title, b.isbn, b.genre, b.shelf_location, b.available_copies, b.total_copies,
+                   m.member_code, m.full_name as member_name, m.email as member_email, m.phone as member_phone,
+                   s.full_name as staff_name
+            FROM loans l
+            JOIN books b ON l.book_id = b.book_id
+            JOIN members m ON l.member_id = m.member_id
+            LEFT JOIN staff s ON l.staff_id = s.staff_id
+            WHERE l.loan_id = ?
+        `).get(loanId);
+
+        if (!loan) {
+            return res.status(404).json({ success: false, message: 'Loan transaction record not found.' });
+        }
+
+        res.json({ success: true, loan });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Failed to retrieve loan record: ' + err.message });
     }
 });
 

@@ -882,8 +882,17 @@ const App = {
 
     async openReturnModal(loanId) {
         try {
-            const data = await ApiService.loans.getAll({ status: 'all' });
-            const loan = (data.loans || []).find(l => l.loan_id === parseInt(loanId, 10));
+            let loan = null;
+            try {
+                const res = await ApiService.loans.getById(loanId);
+                if (res && res.success && res.loan) {
+                    loan = res.loan;
+                }
+            } catch (fetchErr) {
+                const data = await ApiService.loans.getAll({ status: 'all' });
+                loan = (data.loans || []).find(l => l.loan_id === parseInt(loanId, 10));
+            }
+
             if (!loan) throw new Error('Loan record not found');
 
             document.getElementById('return-loan-id').value = loan.loan_id;
