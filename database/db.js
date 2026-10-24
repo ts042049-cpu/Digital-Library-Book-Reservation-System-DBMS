@@ -20,6 +20,7 @@ try {
     sqliteDb = new DatabaseSync(DB_PATH);
     sqliteDb.exec('PRAGMA foreign_keys = ON;');
     sqliteDb.exec('PRAGMA journal_mode = WAL;');
+    sqliteDb.exec('PRAGMA busy_timeout = 5000;');
 } catch (e) {
     console.error('[Database Engine] Failed to initialize SQLite:', e.message);
 }
@@ -82,7 +83,11 @@ function runTransaction(callback) {
         sqliteDb.exec('COMMIT;');
         return result;
     } catch (error) {
-        sqliteDb.exec('ROLLBACK;');
+        try {
+            sqliteDb.exec('ROLLBACK;');
+        } catch (rollbackErr) {
+            console.error('[Database Engine] Rollback warning:', rollbackErr.message);
+        }
         throw error;
     }
 }

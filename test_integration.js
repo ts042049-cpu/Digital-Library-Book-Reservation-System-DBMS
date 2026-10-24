@@ -5,7 +5,10 @@
 
 const http = require('http');
 require('dotenv').config();
-const server = require('./server.js');
+const app = require('./server.js');
+if (app.startServers) {
+    app.startServers();
+}
 
 let sessionCookie = '';
 
@@ -15,7 +18,7 @@ function request(method, path, body = null, cookie = '') {
         const req = http.request({
             hostname: 'localhost',
             port: process.env.PORT || 3000,
-            path: encodeURI(path),
+            path: encodeURI(decodeURI(path)),
             method: method,
             headers: {
                 'Content-Type': 'application/json',
@@ -83,6 +86,9 @@ setTimeout(async () => {
         // Verify book in list
         const booksList = await request('GET', '/api/books?search=Modern%20Operating', null, sessionCookie);
         console.log('3.2 Search created book count:', booksList.body.count);
+        if (!booksList.body.count || booksList.body.count < 1) {
+            throw new Error('Search failed: Created book was not found in catalog search results');
+        }
 
         // Edit book
         const editBookRes = await request('PUT', '/api/books/' + createdBookId, {
@@ -160,9 +166,11 @@ setTimeout(async () => {
         console.log('7.1 Logout status:', logoutRes.status, 'Message:', logoutRes.body.message);
 
         console.log('\n>>> ALL 7 END-TO-END INTEGRATION TESTS PASSED 100%! <<<');
+        if (app.stopServers) app.stopServers();
         process.exit(0);
     } catch (e) {
         console.error('Integration test failed:', e);
+        if (app.stopServers) app.stopServers();
         process.exit(1);
     }
 }, 1000);

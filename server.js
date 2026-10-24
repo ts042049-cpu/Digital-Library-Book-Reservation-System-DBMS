@@ -39,6 +39,7 @@ app.use(session({
     cookie: {
         httpOnly: true,
         secure: false,
+        sameSite: 'lax',
         maxAge: 1000 * 60 * 60 * 24 // 24-hour session
     }
 }));
@@ -58,10 +59,18 @@ app.use((req, res, next) => {
 // REST API Endpoints
 app.use('/api', apiRoutes);
 
+// Fallback for non-existent API routes (must precede frontend catch-all)
+app.all('/api/*', (req, res) => {
+    res.status(404).json({
+        success: false,
+        message: `API endpoint '${req.method} ${req.originalUrl}' was not found.`
+    });
+});
+
 // Static frontend assets
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Fallback to single page interface
+// Fallback to single page interface for client-side navigation
 app.use((req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -76,40 +85,72 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Start Primary Server (Port 5000)
-const primaryServer = app.listen(PRIMARY_PORT, () => {
-    console.log('================================================================');
-    console.log(`   CAMPUSLIB - ACADEMIC LIBRARY MANAGEMENT SYSTEM`);
-    console.log(`   Primary Server Running At:   http://localhost:${PRIMARY_PORT}`);
-    if (PRIMARY_PORT !== SECONDARY_PORT) {
-        console.log(`   Secondary Server Running At: http://localhost:${SECONDARY_PORT}`);
-    }
-    console.log(`   Active Database Engine:      SQLite (with MySQL 8.0 support)`);
-    console.log(`   Session Authentication:      Enabled (credentials: include)`);
-    console.log('================================================================');
-});
+let primaryServer = null;
+let secondaryServer = null;
 
-primaryServer.on('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
-        console.warn(`[Notice] Port ${PRIMARY_PORT} is in use, check secondary port.`);
-    } else {
-        console.error('[Primary Server Error]:', err);
+function startServers() {
+    if (primaryServer) return;
+
+    primaryServer = app.listen(PRIMARY_PORT, () => {
+        console.log('================================================================');
+        console.log(`   CAMPUSLIB - ACADEMIC LIBRARY MANAGEMENT SYSTEM`);
+        console.log(`   Primary Server Running At:   http://localhost:${PRIMARY_PORT}`);
+        if (PRIMARY_PORT !== SECONDARY_PORT) {
+            console.log(`   Secondary Server Running At: http://localhost:${SECONDARY_PORT}`);
+        }
+        console.log(`   Active Database Engine:      SQLite (with MySQL 8.0 support)`);
+        console.log(`   Session Authentication:      Enabled (credentials: include)`);
+        console.log('================================================================');
+    });
+
+    primaryServer.on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+            console.warn(`[Notice] Port ${PRIMARY_PORT} is in use, check secondary port.`);
+        } else {
+            console.error('[Primary Server Error]:', err);
+        }
+    });
+
+    if (PRIMARY_PORT !== SECONDARY_PORT) {
+        try {
+            secondaryServer = app.listen(SECONDARY_PORT, () => {
+                console.log(`[DualPort] Secondary server active on http://localhost:${SECONDARY_PORT}`);
+            });
+            secondaryServer.on('error', (err) => {
+                if (err.code !== 'EADDRINUSE') {
+                    console.warn(`[Secondary Port ${SECONDARY_PORT}]:`, err.message);
+                }
+            });
+        } catch (e) {}
     }
-});
-if (PRIMARY_PORT !== SECONDARY_PORT) {
-    try {
-        const secondaryServer = app.listen(SECONDARY_PORT, () => {
-            console.log(`[DualPort] Secondary server active on http://localhost:${SECONDARY_PORT}`);
-        });
-        secondaryServer.on('error', (err) => {
-            if (err.code !== 'EADDRINUSE') {
-                console.warn(`[Secondary Port ${SECONDARY_PORT}]:`, err.message);
-            }
-        });
-    } catch (e) {}
 }
 
-// Error & signal handlers to keep server robust
+function stopServers() {
+    if (primaryServer) {
+        primaryServer.close();
+        primaryServer = null;
+    }
+    if (secondaryServer) {
+        secondaryServer.close();
+        secondaryServer = null;
+    }
+}
+
+// Auto-start when executed directly as main script
+if (require.main === module) {
+    startServers();
+}
+
+function gracefulShutdown(signal) {
+    console.log(`[Server] Received ${signal}. Closing active listeners...`);
+    stopServers();
+    process.exit(0);
+}
+
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+
+// Error handlers for unhandled rejections
 process.on('uncaughtException', (err) => {
     console.error('[Uncaught Exception]:', err);
 });
@@ -118,21 +159,8 @@ process.on('unhandledRejection', (reason, promise) => {
     console.error('[Unhandled Rejection]:', reason);
 });
 
-process.on('SIGINT', () => {
-    console.log('[Server] Received SIGINT (ignored to keep daemon alive)');
-});
-
-process.on('SIGTERM', () => {
-    console.log('[Server] Received SIGTERM (ignored to keep daemon alive)');
-});
-
-process.on('SIGBREAK', () => {
-    console.log('[Server] Received SIGBREAK (ignored to keep daemon alive)');
-});
-
-// Resume stdin to keep event loop active under background task runners
-if (process.stdin.isTTY) {
-    process.stdin.resume();
-}
+// Attach helper methods to app export for testing and programmatic usage
+app.startServers = startServers;
+app.stopServers = stopServers;
 
 module.exports = app;

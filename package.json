@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch-path=server.js --watch-path=routes --watch-path=middleware server.js",
+    "test": "node test_integration.js"
   },
   "keywords": [
     "library-management-system",

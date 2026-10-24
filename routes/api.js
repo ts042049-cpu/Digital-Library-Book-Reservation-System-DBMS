@@ -289,7 +289,8 @@ router.post('/books', (req, res) => {
             return res.status(409).json({ success: false, message: `Book with ISBN "${isbn}" already exists in the catalog.` });
         }
 
-        const year = publication_year ? parseInt(publication_year, 10) : null;
+        const parsedYear = publication_year ? parseInt(publication_year, 10) : null;
+        const year = isNaN(parsedYear) ? null : parsedYear;
         const shelf = shelf_location ? shelf_location.trim() : 'Section A';
 
         const stmt = db.prepare(`
@@ -367,7 +368,7 @@ router.put('/books/:id', (req, res) => {
             title ? title.trim() : currentBook.title,
             author ? author.trim() : currentBook.author,
             publisher !== undefined ? publisher : currentBook.publisher,
-            publication_year ? parseInt(publication_year, 10) : currentBook.publication_year,
+            publication_year !== undefined ? (!isNaN(parseInt(publication_year, 10)) ? parseInt(publication_year, 10) : null) : currentBook.publication_year,
             genre ? genre.trim() : currentBook.genre,
             newTotalCopies,
             newAvailableCopies,
@@ -500,9 +501,16 @@ router.post('/members', (req, res) => {
         }
 
         const currentYear = new Date().getFullYear();
+        let seq = 1;
         const lastMember = db.prepare('SELECT member_id FROM members ORDER BY member_id DESC LIMIT 1').get();
-        const nextId = (lastMember ? lastMember.member_id : 0) + 1;
-        const memberCode = `MEM-${currentYear}-${String(nextId).padStart(3, '0')}`;
+        if (lastMember) {
+            seq = lastMember.member_id + 1;
+        }
+        let memberCode = `MEM-${currentYear}-${String(seq).padStart(3, '0')}`;
+        while (db.prepare('SELECT member_id FROM members WHERE member_code = ?').get(memberCode)) {
+            seq++;
+            memberCode = `MEM-${currentYear}-${String(seq).padStart(3, '0')}`;
+        }
 
         const limit = max_borrow_limit ? parseInt(max_borrow_limit, 10) : (membership_type === 'Faculty' ? 8 : 4);
 
@@ -565,7 +573,7 @@ router.put('/members/:id', (req, res) => {
             address !== undefined ? address.trim() : currentMember.address,
             membership_type || currentMember.membership_type,
             status || currentMember.status,
-            max_borrow_limit ? parseInt(max_borrow_limit, 10) : currentMember.max_borrow_limit,
+            max_borrow_limit ? (!isNaN(parseInt(max_borrow_limit, 10)) ? parseInt(max_borrow_limit, 10) : currentMember.max_borrow_limit) : currentMember.max_borrow_limit,
             memberId
         );
 
@@ -719,9 +727,12 @@ router.post('/loans/issue', (req, res) => {
 
         let finalDueDate;
         if (due_date && due_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            if (due_date < issueDate) {
+                return res.status(400).json({ success: false, message: 'Due date cannot be earlier than today.' });
+            }
             finalDueDate = due_date;
         } else {
-            const days = parseInt(loan_days, 10) || 14;
+            const days = Math.max(1, parseInt(loan_days, 10) || 14);
             const dueDateObj = new Date(today.getTime() + days * 24 * 60 * 60 * 1000);
             finalDueDate = dueDateObj.toISOString().split('T')[0];
         }
@@ -862,7 +873,7 @@ router.post('/loans/:id/renew', (req, res) => {
         }
 
         const baseDate = new Date(loan.due_date) > new Date() ? new Date(loan.due_date) : new Date();
-        const days = parseInt(additional_days, 10) || 14;
+        const days = Math.max(1, parseInt(additional_days, 10) || 14);
         const newDue = new Date(baseDate.getTime() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
         db.prepare("UPDATE loans SET due_date = ?, status = 'Issued' WHERE loan_id = ?").run(newDue, loanId);
