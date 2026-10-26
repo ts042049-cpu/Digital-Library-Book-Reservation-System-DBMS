@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Library Management System | Campus Academic LMS</title>
+    <title>K.R. Mangalam University | CampusLib LMS</title>
+    <link rel="icon" type="image/png" href="images/logo-transparent.png">
+    <link rel="apple-touch-icon" href="images/logo.png">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -13,14 +15,12 @@
              ==================================================================== -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div class="brand-icon">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                    </svg>
+                <div class="brand-logo-container" title="K.R. Mangalam University">
+                    <img src="images/logo-transparent.png" alt="K.R. Mangalam University Logo" class="brand-logo-img">
                 </div>
                 <div class="brand-text">
-                    <h1>CampusLib LMS</h1>
-                    <span>Library Circulation Desk</span>
+                    <h1 title="K.R. Mangalam University">K.R. Mangalam Univ.</h1>
+                    <span>Central Library LMS</span>
                 </div>
             </div>
 
@@ -132,6 +132,14 @@
                 </div>
 
                 <div class="topbar-right">
+                    <div class="topbar-inst-badge" title="K.R. Mangalam University, Gurugram">
+                        <img src="images/logo-transparent.png" alt="KRMU Crest" class="topbar-inst-logo">
+                        <div class="topbar-inst-info">
+                            <span class="topbar-inst-name">K.R. Mangalam University</span>
+                            <span class="topbar-inst-sub">Central Academic Library Desk</span>
+                        </div>
+                    </div>
+
                     <div class="system-date-pill">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -842,6 +850,23 @@
 
                 <!-- VIEW 9: DBMS SCHEMA & VIVA EXPLANATION -->
                 <section id="view-viva" class="page-view" style="display:none;">
+                    <div class="viva-university-banner">
+                        <div class="viva-banner-logo-wrap">
+                            <img src="images/logo-transparent.png" alt="K.R. Mangalam University Crest" class="viva-banner-logo">
+                        </div>
+                        <div class="viva-banner-content">
+                            <div class="viva-banner-institution">K.R. MANGALAM UNIVERSITY</div>
+                            <div class="viva-banner-sub">School of Engineering and Technology • Department of Computer Science & Engineering</div>
+                            <h3 class="viva-banner-title">Database Management Systems (DBMS) Course Project Evaluation</h3>
+                            <div class="viva-banner-meta-grid">
+                                <span class="viva-meta-pill"><strong>Student:</strong> Tushar Saini</span>
+                                <span class="viva-meta-pill"><strong>Roll No:</strong> 2501730053</span>
+                                <span class="viva-meta-pill"><strong>System:</strong> CampusLib Academic LMS</span>
+                                <span class="viva-meta-pill"><strong>Motto:</strong> Destination Success</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="page-header">
                         <div class="page-title-group">
                             <h2>DBMS Course Project Architecture & Viva Guide</h2>
@@ -1053,6 +1078,15 @@
                 <button class="modal-close-btn" onclick="App.closeModal('modal-auth')">&times;</button>
             </div>
             <div class="modal-body">
+                <!-- University Branding Header -->
+                <div class="modal-inst-header">
+                    <img src="images/logo-transparent.png" alt="KRMU Emblem" class="modal-inst-logo">
+                    <div>
+                        <div class="modal-inst-title">K.R. Mangalam University</div>
+                        <div class="modal-inst-sub">Central Library Staff Portal & Circulation Desk</div>
+                    </div>
+                </div>
+
                 <!-- Current Logged In Profile -->
                 <div style="background:var(--bg-subtle); border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:1rem; margin-bottom:1.25rem; display:flex; align-items:center; justify-content:space-between;">
                     <div>
@@ -1102,6 +1136,15 @@
                 <button class="modal-close-btn" onclick="App.closeModal('modal-viva')">&times;</button>
             </div>
             <div class="modal-body" style="font-size:0.85rem; line-height:1.6;">
+                <!-- University Branding Header -->
+                <div class="modal-inst-header">
+                    <img src="images/logo-transparent.png" alt="KRMU Emblem" class="modal-inst-logo">
+                    <div>
+                        <div class="modal-inst-title">K.R. Mangalam University — Academic Viva Presets</div>
+                        <div class="modal-inst-sub">Candidate: Tushar Saini (2501730053) | DBMS Demonstration</div>
+                    </div>
+                </div>
+
                 <p style="color:var(--text-secondary); margin-bottom:1rem;">
                     Click any test scenario to demonstrate the DBMS integrity constraints and business rules to the professor:
                 </p>
