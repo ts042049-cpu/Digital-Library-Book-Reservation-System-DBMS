@@ -1,9 +1,3 @@
--- ====================================================================
--- SEED DATA FOR LIBRARY MANAGEMENT SYSTEM
--- Populates authentic academic library data for testing & viva demo
--- Explicit Primary Keys guarantee relational integrity and prevent FK errors
--- ====================================================================
-
 -- 1. Insert Staff Accounts
 -- Default passwords for testing: 'admin123' for Admin, 'lib123' for Librarian
 INSERT INTO staff (staff_id, staff_code, full_name, email, phone, role, hire_date, password, status) VALUES
