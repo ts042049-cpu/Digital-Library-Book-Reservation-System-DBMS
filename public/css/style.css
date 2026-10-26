@@ -1274,11 +1274,29 @@ body {
     .mobile-menu-btn {
         display: block;
     }
+    .topbar-inst-info {
+        display: none;
+    }
+    .topbar-inst-badge {
+        padding: 0.35rem;
+    }
 }
 
 @media (max-width: 640px) {
     .topbar {
         padding: 0 1rem;
+    }
+    .topbar-inst-badge {
+        display: none;
+    }
+    .viva-university-banner {
+        flex-direction: column;
+        text-align: center;
+        gap: 1rem;
+        padding: 1.25rem 1rem;
+    }
+    .viva-banner-meta-grid {
+        justify-content: center;
     }
     .page-container {
         padding: 1rem;
