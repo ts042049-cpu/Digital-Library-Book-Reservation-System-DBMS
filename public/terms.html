@@ -1028,8 +1028,23 @@
     <!-- Interactive Script -->
     <script>
         const PolicyApp = {
-            init() {
+            async init() {
                 this.setupScrollSpy();
+                this.checkSessionStatus();
+            },
+
+            async checkSessionStatus() {
+                try {
+                    const res = await fetch('/api/auth/me', { credentials: 'include' });
+                    const data = await res.json();
+                    if (!data || !data.authenticated) {
+                        // Unauthenticated users must log in before accessing the home page
+                        document.querySelectorAll('a[href="index.html"]').forEach(el => {
+                            el.href = 'login.html';
+                            el.title = 'Authentication required: Sign in to access the Library Dashboard';
+                        });
+                    }
+                } catch(e) {}
             },
 
             calculateFine() {
