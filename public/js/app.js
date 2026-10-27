@@ -26,12 +26,15 @@ const App = {
      * Initialize Application on DOM Ready
      */
     async init() {
+        // 1. Mandatory Session Guard: Home page requires prior authentication
+        const isAuthenticated = await this.checkCurrentSession();
+        if (!isAuthenticated) {
+            return; // Halt all operations, redirecting to login.html
+        }
+
         this.setupNavigation();
         this.setupEventListeners();
         this.updateDateDisplay();
-
-        // 1. Check current authenticated session via GET /api/auth/me
-        await this.checkCurrentSession();
 
         // 2. Load initial dashboard data
         this.navigate('dashboard');
@@ -46,11 +49,17 @@ const App = {
     async checkCurrentSession() {
         try {
             const data = await ApiService.auth.me();
-            if (data && data.user) {
+            if (data && data.authenticated && data.user) {
                 this.setCurrentUser(data.user);
+                return true;
             }
+            // Not authenticated: home page is locked -> go to login page
+            window.location.replace('login.html');
+            return false;
         } catch (err) {
-            console.warn('[Session] Session check fallback:', err.message);
+            console.warn('[Session] Session check failed, redirecting to login:', err.message);
+            window.location.replace('login.html');
+            return false;
         }
     },
 
