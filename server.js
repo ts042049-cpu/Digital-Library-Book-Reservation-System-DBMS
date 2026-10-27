@@ -67,7 +67,7 @@ app.all('/api/*', (req, res) => {
     });
 });
 
-// Dedicated page routes for Login and Terms/Policy
+// Dedicated public page routes for Login and Terms/Policy
 app.get(['/login', '/login.html'], (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
@@ -76,12 +76,29 @@ app.get(['/terms', '/terms.html', '/policy', '/policies', '/terms-and-policy', '
     res.sendFile(path.join(__dirname, 'public', 'terms.html'));
 });
 
-// Static frontend assets
-app.use(express.static(path.join(__dirname, 'public')));
+// Authentication Guard: ONLY authenticated users can access the home page/dashboard
+function requireHomeSession(req, res, next) {
+    if (req.session && req.session.user) {
+        return next();
+    }
+    // Any unauthenticated attempt to open the home page is redirected strictly to /login
+    return res.redirect('/login');
+}
 
-// Fallback to single page interface for client-side navigation
-app.use((req, res) => {
+// Protected Home Page routes (must be authenticated via login to access)
+app.get(['/', '/index.html', '/dashboard', '/home'], requireHomeSession, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Static frontend assets (styles, scripts, images) - index: false ensures index.html cannot bypass auth
+app.use(express.static(path.join(__dirname, 'public'), { index: false }));
+
+// Fallback for client-side navigation: protect home page
+app.use((req, res) => {
+    if (req.session && req.session.user) {
+        return res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    }
+    return res.redirect('/login');
 });
 
 // Centralized Error handling middleware

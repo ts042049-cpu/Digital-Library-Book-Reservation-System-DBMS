@@ -85,18 +85,10 @@ router.get('/auth/me', (req, res) => {
             user: req.session.user
         });
     }
-    // If no active session, dynamically find the active staff member from the database
-    const defaultStaff = db.prepare("SELECT staff_id, staff_code, full_name, email, role FROM staff WHERE status = 'Active' ORDER BY staff_id ASC LIMIT 1").get();
     res.json({
         success: true,
         authenticated: false,
-        user: defaultStaff || {
-            staff_id: null,
-            staff_code: 'GUEST',
-            full_name: 'Dr. Rajesh Sharma',
-            email: 'admin@library.edu',
-            role: 'Admin'
-        }
+        user: null
     });
 });
 
