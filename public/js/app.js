@@ -189,6 +189,9 @@ const App = {
             case 'viva':
                 // Static DBMS specifications view
                 break;
+            case 'terms':
+                // Static terms & policies view
+                break;
         }
     },
 
@@ -1276,7 +1279,7 @@ const App = {
     async handleLogout() {
         try {
             const data = await ApiService.auth.logout();
-            this.showToast(data.message || 'Logged out successfully', 'info');
+            this.showToast(data.message || 'Logged out successfully. Redirecting to login...', 'info');
             this.setCurrentUser({
                 staff_id: 0,
                 staff_code: 'GUEST',
@@ -1285,7 +1288,9 @@ const App = {
                 role: 'Assistant'
             });
             this.closeModal('modal-auth');
-            this.navigate('dashboard');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 600);
         } catch (err) {
             this.showToast(err.message, 'error');
         }

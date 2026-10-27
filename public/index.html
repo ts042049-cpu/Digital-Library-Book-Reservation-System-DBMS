@@ -93,6 +93,22 @@
                     </svg>
                     <span>DBMS Schema & Viva</span>
                 </button>
+
+                <div class="sidebar-section-title">Policies & Access</div>
+
+                <button class="nav-item" data-view="terms">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>Terms & Policies</span>
+                </button>
+
+                <a href="login.html" class="nav-item" style="text-decoration:none;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                    </svg>
+                    <span>Login Page</span>
+                </a>
             </nav>
 
             <div class="sidebar-footer">
@@ -146,6 +162,20 @@
                         </svg>
                         <span id="current-date-display">Today</span>
                     </div>
+
+                    <a href="terms.html" class="btn btn-sm btn-outline" title="Library Terms of Service and Policies" style="display:inline-flex; align-items:center; gap:5px; font-size:0.8rem; padding:5px 10px;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:14px;height:14px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span>Terms & Policy</span>
+                    </a>
+
+                    <a href="login.html" class="btn btn-sm btn-primary" title="Dedicated Staff Login Page" style="display:inline-flex; align-items:center; gap:5px; font-size:0.8rem; padding:5px 10px;">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:14px;height:14px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                        </svg>
+                        <span>Login</span>
+                    </a>
 
                     <button class="btn-viva-helper" id="btn-viva-modal">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:14px;height:14px;color:var(--accent-600)">
@@ -908,6 +938,91 @@
                     </div>
                 </section>
 
+                <!-- VIEW 10: TERMS & POLICY -->
+                <section id="view-terms" class="page-view" style="display:none;">
+                    <div class="page-header">
+                        <div class="page-title-group">
+                            <h2>Central Library Terms, Circulation Bylaws & Privacy Charter</h2>
+                            <p>Official library borrowing quotas, overdue fine structures, loss replacements, and student data privacy rules</p>
+                        </div>
+                        <div class="page-actions">
+                            <a href="terms.html" class="btn btn-primary" target="_blank">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                <span>Open Full Document (Printable) &rarr;</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <div class="card" style="grid-column: span 12;">
+                            <div class="card-header">
+                                <h3 class="card-title">Borrowing Entitlements & Circulation Rules Summary</h3>
+                                <span class="badge badge-success">Academic Year 2026–2027</span>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Member Category</th>
+                                                <th>Borrowing Limit</th>
+                                                <th>Loan Duration</th>
+                                                <th>Allowed Renewals</th>
+                                                <th>Overdue Fine Rate</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><strong>Student (UG / PG)</strong></td>
+                                                <td><span class="badge badge-primary">4 Volumes</span></td>
+                                                <td>14 Days</td>
+                                                <td>1 Time (14 days)</td>
+                                                <td>₹5.00 / day</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Research Scholar</strong></td>
+                                                <td><span class="badge badge-primary">6 Volumes</span></td>
+                                                <td>21 Days</td>
+                                                <td>2 Times (14 days ea.)</td>
+                                                <td>₹5.00 / day</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Faculty Member</strong></td>
+                                                <td><span class="badge badge-primary">8 Volumes</span></td>
+                                                <td>30 Days</td>
+                                                <td>2 Times (30 days ea.)</td>
+                                                <td><span class="badge badge-success">Exempt (Grace Period)</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card" style="grid-column: span 6;">
+                            <div class="card-header">
+                                <h3 class="card-title">Overdue Penalties & Account Suspensions</h3>
+                            </div>
+                            <div class="card-body" style="font-size:0.875rem; line-height:1.7;">
+                                <p><strong>Daily Fine Calculation:</strong> Fines accrue automatically at ₹5.00/day for days 1–7, escalating to ₹10.00/day thereafter.</p>
+                                <p style="margin-top:0.5rem;"><strong>Suspension Threshold:</strong> Borrowing is automatically suspended if unpaid fines exceed ₹100.00 or if any item is overdue by 14+ days.</p>
+                                <p style="margin-top:0.5rem;"><strong>Clearance:</strong> Fines must be cleared at the circulation desk before semester admit cards or "No Dues" certificates are approved.</p>
+                            </div>
+                        </div>
+
+                        <div class="card" style="grid-column: span 6;">
+                            <div class="card-header">
+                                <h3 class="card-title">Student Data Privacy & Audit Integrity</h3>
+                            </div>
+                            <div class="card-body" style="font-size:0.875rem; line-height:1.7;">
+                                <p><strong>Confidential Records:</strong> Member profiles, borrow history, and fine receipts are protected with role-based access control and salted bcrypt hashing.</p>
+                                <p style="margin-top:0.5rem;"><strong>Zero Third-Party Sharing:</strong> Educational records are never shared with or sold to outside advertisers or third parties.</p>
+                                <p style="margin-top:0.5rem;"><strong>Audit Logs:</strong> All catalog updates and circulation transactions are recorded in the <code>audit_logs</code> table with staff attribution.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
             </main>
         </div>
     </div>
@@ -1120,6 +1235,14 @@
                 <div style="font-size:0.85rem; font-weight:700; margin-bottom:0.5rem; color:var(--text-primary);">Quick-Switch Staff Demo Profiles</div>
                 <div style="display:flex; flex-direction:column; gap:0.6rem;" id="staff-accounts-list">
                     <!-- Populated dynamically -->
+                </div>
+                <div style="margin-top:1rem; padding-top:0.75rem; border-top:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                    <a href="login.html" class="btn btn-sm btn-primary" style="display:inline-flex; align-items:center; gap:5px;">
+                        <span>Open Dedicated Login Page &rarr;</span>
+                    </a>
+                    <a href="terms.html" class="btn btn-sm btn-outline" style="display:inline-flex; align-items:center; gap:5px;">
+                        <span>Terms & Policies</span>
+                    </a>
                 </div>
             </div>
             <div class="modal-footer">

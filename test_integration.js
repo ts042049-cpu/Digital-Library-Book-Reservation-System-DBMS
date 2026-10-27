@@ -165,7 +165,27 @@ setTimeout(async () => {
         const logoutRes = await request('POST', '/api/auth/logout', null, sessionCookie);
         console.log('7.1 Logout status:', logoutRes.status, 'Message:', logoutRes.body.message);
 
-        console.log('\n>>> ALL 7 END-TO-END INTEGRATION TESTS PASSED 100%! <<<');
+        console.log('\n=== TEST 8: LOGIN & TERMS PAGES ROUTING ===');
+        const loginPageRes = await request('GET', '/login');
+        console.log('8.1 GET /login status:', loginPageRes.status, 'Has Login HTML:', typeof loginPageRes.body === 'string' && loginPageRes.body.includes('Portal Login'));
+        if (loginPageRes.status !== 200 || !loginPageRes.body.includes('Portal Login')) {
+            throw new Error('/login did not return login.html');
+        }
+
+        const termsPageRes = await request('GET', '/terms');
+        console.log('8.2 GET /terms status:', termsPageRes.status, 'Has Terms HTML:', typeof termsPageRes.body === 'string' && termsPageRes.body.includes('Terms of Service & Library Policies'));
+        if (termsPageRes.status !== 200 || !termsPageRes.body.includes('Terms of Service & Library Policies')) {
+            throw new Error('/terms did not return terms.html');
+        }
+
+        const directLoginRes = await request('GET', '/login.html');
+        const directTermsRes = await request('GET', '/terms.html');
+        console.log('8.3 Static /login.html status:', directLoginRes.status, '| /terms.html status:', directTermsRes.status);
+        if (directLoginRes.status !== 200 || directTermsRes.status !== 200) {
+            throw new Error('Direct static page access failed');
+        }
+
+        console.log('\n>>> ALL 8 END-TO-END INTEGRATION TESTS PASSED 100%! <<<');
         if (app.stopServers) app.stopServers();
         process.exit(0);
     } catch (e) {

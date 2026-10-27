@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Service & Library Policies | K.R. Mangalam University Central Library</title>
+    <link rel="icon" type="image/png" href="images/logo-transparent.png">
+    <link rel="apple-touch-icon" href="images/logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        :root {
+            --policy-bg: #f8fafc;
+            --policy-surface: #ffffff;
+            --policy-sidebar-bg: #0f172a;
+            --policy-primary: #1e3a8a;
+            --policy-accent: #059669;
+            --policy-border: #e2e8f0;
+            --policy-text-main: #0f172a;
+            --policy-text-muted: #64748b;
+        }
+
+        body.policy-body {
+            background-color: var(--policy-bg);
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--policy-text-main);
+            line-height: 1.6;
+        }
+
+        /* Topbar Header */
+        .policy-header {
+            background: #ffffff;
+            border-bottom: 1px solid var(--policy-border);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .policy-header-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0.85rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .policy-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            text-decoration: none;
+            color: var(--policy-text-main);
+        }
+
+        .policy-brand img {
+            width: 42px;
+            height: 42px;
+            object-fit: contain;
+        }
+
+        .policy-brand-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: var(--primary-900);
+            line-height: 1.2;
+        }
+
+        .policy-brand-sub {
+            font-size: 0.75rem;
+            color: var(--policy-text-muted);
+            font-weight: 500;
+        }
+
+        .policy-actions-group {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        /* Hero Banner */
+        .policy-hero {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+            color: #ffffff;
+            padding: 3rem 1.5rem 2.5rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .policy-hero::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            background: radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.15), transparent 40%);
+            pointer-events: none;
+        }
+
+        .policy-hero-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-meta-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            color: #bfdbfe;
+            margin-bottom: 1rem;
+        }
+
+        .policy-hero-title {
+            font-size: 2.25rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            margin-bottom: 0.75rem;
+        }
+
+        .policy-hero-subtitle {
+            font-size: 1rem;
+            color: #cbd5e1;
+            max-width: 780px;
+            line-height: 1.5;
+            margin-bottom: 1.75rem;
+        }
+
+        /* Search & Filter Bar */
+        .policy-search-box {
+            background: #ffffff;
+            border-radius: 10px;
+            padding: 0.5rem 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            max-width: 640px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+        }
+
+        .policy-search-box svg {
+            width: 20px;
+            height: 20px;
+            color: #64748b;
+            flex-shrink: 0;
+        }
+
+        .policy-search-input {
+            flex: 1;
+            border: none;
+            outline: none;
+            font-size: 0.95rem;
+            font-family: inherit;
+            color: #0f172a;
+        }
+
+        .policy-search-count {
+            font-size: 0.75rem;
+            color: #64748b;
+            background: #f1f5f9;
+            padding: 0.25rem 0.6rem;
+            border-radius: 9999px;
+            font-weight: 600;
+        }
+
+        /* Main Content Grid */
+        .policy-layout-container {
+            max-width: 1280px;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 2.5rem;
+            align-items: flex-start;
+        }
+
+        /* Sticky Left Sidebar Navigation */
+        .policy-toc-sidebar {
+            background: #ffffff;
+            border: 1px solid var(--policy-border);
+            border-radius: 12px;
+            padding: 1.25rem;
+            position: sticky;
+            top: 5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            max-height: calc(100vh - 6rem);
+            overflow-y: auto;
+        }
+
+        .toc-title {
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--policy-text-muted);
+            font-weight: 700;
+            margin-bottom: 0.85rem;
+        }
+
+        .toc-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .toc-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            color: #475569;
+            text-decoration: none;
+            font-size: 0.825rem;
+            font-weight: 500;
+            border-radius: 6px;
+            transition: all 0.15s ease;
+            line-height: 1.3;
+        }
+
+        .toc-link:hover {
+            color: var(--primary-700);
+            background: #eff6ff;
+        }
+
+        .toc-link.active {
+            color: #1e3a8a;
+            background: #dbeafe;
+            font-weight: 700;
+        }
+
+        .toc-number {
+            font-size: 0.72rem;
+            color: #94a3b8;
+            font-weight: 700;
+            min-width: 18px;
+        }
+
+        .sidebar-help-box {
+            margin-top: 1.5rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--policy-border);
+            font-size: 0.78rem;
+            color: #64748b;
+        }
+
+        /* Policy Main Content Articles */
+        .policy-articles {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .policy-card {
+            background: #ffffff;
+            border: 1px solid var(--policy-border);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            scroll-margin-top: 6rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .policy-card:hover {
+            border-color: #cbd5e1;
+        }
+
+        .policy-card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.85rem;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .policy-section-num {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #2563eb;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .policy-card-title {
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #0f172a;
+            letter-spacing: -0.01em;
+        }
+
+        .policy-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            padding: 0.25rem 0.65rem;
+            border-radius: 9999px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .policy-badge.mandatory {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .policy-badge.info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .policy-content {
+            font-size: 0.92rem;
+            color: #334155;
+            line-height: 1.7;
+        }
+
+        .policy-content p {
+            margin-bottom: 1rem;
+        }
+
+        .policy-content ul, .policy-content ol {
+            padding-left: 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .policy-content li {
+            margin-bottom: 0.4rem;
+        }
+
+        /* Policy Callouts */
+        .policy-callout {
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            margin: 1.25rem 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.85rem;
+            font-size: 0.875rem;
+        }
+
+        .policy-callout.note {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            color: #1e40af;
+        }
+
+        .policy-callout.warning {
+            background: #fef2f2;
+            border-left: 4px solid #ef4444;
+            color: #991b1b;
+        }
+
+        .policy-callout.success {
+            background: #ecfdf5;
+            border-left: 4px solid #10b981;
+            color: #065f46;
+        }
+
+        .callout-icon {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        /* Policy Comparison Table */
+        .policy-table-wrapper {
+            overflow-x: auto;
+            margin: 1.25rem 0;
+            border: 1px solid var(--policy-border);
+            border-radius: 8px;
+        }
+
+        .policy-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            text-align: left;
+        }
+
+        .policy-table th {
+            background: #f8fafc;
+            color: #475569;
+            font-weight: 700;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--policy-border);
+        }
+
+        .policy-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #f1f5f9;
+            color: #1e293b;
+        }
+
+        .policy-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .policy-table tr:hover td {
+            background-color: #f8fafc;
+        }
+
+        /* Interactive Fine Calculator Widget */
+        .calculator-widget {
+            background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
+            border: 1px solid #bfdbfe;
+            border-radius: 10px;
+            padding: 1.25rem;
+            margin: 1.5rem 0;
+        }
+
+        .calculator-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1e3a8a;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .calc-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 0.75rem;
+            align-items: flex-end;
+        }
+
+        .calc-field label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 0.35rem;
+        }
+
+        .calc-field select, .calc-field input {
+            width: 100%;
+            padding: 0.55rem 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-family: inherit;
+            background: #fff;
+        }
+
+        .calc-result-box {
+            margin-top: 1rem;
+            padding: 0.85rem 1rem;
+            background: #ffffff;
+            border: 1px solid #93c5fd;
+            border-radius: 6px;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .calc-result-box.show {
+            display: flex;
+            animation: fadeIn 0.2s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Bottom Acceptance Banner */
+        .policy-footer-acceptance {
+            background: #ffffff;
+            border: 1px solid var(--policy-border);
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin-top: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .policy-footer-acceptance h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #0f172a;
+        }
+
+        .policy-footer-acceptance p {
+            color: #64748b;
+            font-size: 0.9rem;
+            max-width: 600px;
+            margin: 0 auto 1.5rem auto;
+        }
+
+        /* Main Footer */
+        .policy-page-footer {
+            background: #0f172a;
+            color: #94a3b8;
+            padding: 2.5rem 1.5rem;
+            margin-top: 4rem;
+            font-size: 0.85rem;
+        }
+
+        .policy-page-footer-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+
+        /* Print Media Styles */
+        @media print {
+            .policy-header, .policy-toc-sidebar, .policy-search-box, .policy-actions-group, .calculator-widget, .policy-footer-acceptance, .policy-page-footer {
+                display: none !important;
+            }
+            .policy-hero {
+                background: none !important;
+                color: #000 !important;
+                padding: 1rem 0 !important;
+                border-bottom: 2px solid #000;
+            }
+            .policy-hero-title {
+                color: #000 !important;
+                font-size: 1.8rem !important;
+            }
+            .policy-layout-container {
+                display: block !important;
+                max-width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .policy-card {
+                border: 1px solid #ccc !important;
+                box-shadow: none !important;
+                margin-bottom: 1.5rem !important;
+                page-break-inside: avoid;
+            }
+            body.policy-body {
+                background: #fff !important;
+                color: #000 !important;
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 960px) {
+            .policy-layout-container {
+                grid-template-columns: 1fr;
+            }
+            .policy-toc-sidebar {
+                position: static;
+                max-height: none;
+            }
+            .calc-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="policy-body">
+
+    <!-- Top Navigation Header -->
+    <header class="policy-header">
+        <div class="policy-header-inner">
+            <a href="index.html" class="policy-brand" title="K.R. Mangalam University Central Library">
+                <img src="images/logo-transparent.png" alt="KRMU Emblem">
+                <div>
+                    <div class="policy-brand-title">K.R. Mangalam University</div>
+                    <div class="policy-brand-sub">Central Library Regulations & Student Privacy Charter</div>
+                </div>
+            </a>
+
+            <div class="policy-actions-group">
+                <a href="index.html" class="btn btn-outline" style="font-size:0.825rem; padding:6px 12px;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                    <span>Main Catalog</span>
+                </a>
+
+                <a href="login.html" class="btn btn-primary" style="font-size:0.825rem; padding:6px 12px;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" /></svg>
+                    <span>Staff Portal</span>
+                </a>
+
+                <button type="button" class="btn btn-outline" onclick="window.print()" title="Print or Save PDF" style="font-size:0.825rem; padding:6px 12px;">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                    <span>Print PDF</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Header Banner -->
+    <section class="policy-hero">
+        <div class="policy-hero-inner">
+            <div class="hero-meta-badge">
+                <span>DOC ID: KRMU/CL-POL/2026-V2.4</span>
+                <span>&bull;</span>
+                <span>Effective: Academic Year 2026–2027</span>
+                <span>&bull;</span>
+                <span>Last Updated: October 2026</span>
+            </div>
+
+            <h1 class="policy-hero-title">Library Terms of Service, Circulation Bylaws & Privacy Charter</h1>
+            <p class="policy-hero-subtitle">
+                Official rules governing borrowing limits, loan durations, overdue fine structures, loss replacements, digital lab acceptable use, and student personal data protection.
+            </p>
+
+            <!-- Search / Keyword Filter Box -->
+            <div class="policy-search-box">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input type="text" id="policy-search-input" class="policy-search-input" placeholder="Search rules (e.g. 'fine', 'lost book', 'loan quota', 'wifi', 'privacy')..." oninput="PolicyApp.filterArticles()">
+                <span class="policy-search-count" id="policy-match-count">10 Sections</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Layout Grid -->
+    <div class="policy-layout-container">
+        
+        <!-- Sticky Left Sidebar Table of Contents -->
+        <aside class="policy-toc-sidebar">
+            <div class="toc-title">Table of Contents</div>
+            <nav>
+                <ul class="toc-list" id="toc-list">
+                    <li><a href="#section-1" class="toc-link active"><span class="toc-number">01</span><span>Institutional Scope & Eligibility</span></a></li>
+                    <li><a href="#section-2" class="toc-link"><span class="toc-number">02</span><span>Membership & Smart Card Rules</span></a></li>
+                    <li><a href="#section-3" class="toc-link"><span class="toc-number">03</span><span>Borrowing Quotas & Durations</span></a></li>
+                    <li><a href="#section-4" class="toc-link"><span class="toc-number">04</span><span>Overdue Fines & Penalty Rates</span></a></li>
+                    <li><a href="#section-5" class="toc-link"><span class="toc-number">05</span><span>Book Reservations & Hold Queue</span></a></li>
+                    <li><a href="#section-6" class="toc-link"><span class="toc-number">06</span><span>Lost, Damaged & Defaced Items</span></a></li>
+                    <li><a href="#section-7" class="toc-link"><span class="toc-number">07</span><span>Digital Library & Wi-Fi Policy</span></a></li>
+                    <li><a href="#section-8" class="toc-link"><span class="toc-number">08</span><span>Reading Hall Conduct & Silence</span></a></li>
+                    <li><a href="#section-9" class="toc-link"><span class="toc-number">09</span><span>Data Privacy & Security Charter</span></a></li>
+                    <li><a href="#section-10" class="toc-link"><span class="toc-number">10</span><span>Clearance & Grievance Directory</span></a></li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-help-box">
+                <div style="font-weight:700; color:#0f172a; margin-bottom:4px;">Desk Working Hours</div>
+                <div>Mon–Sat: 08:30 AM – 08:00 PM</div>
+                <div>Circulation: 09:00 AM – 06:00 PM</div>
+                <div style="margin-top:8px; color:#2563eb; font-weight:600;">Office: Room 102, Central Block</div>
+            </div>
+        </aside>
+
+        <!-- Right Main Articles -->
+        <main class="policy-articles" id="policy-articles-container">
+
+            <!-- SECTION 1 -->
+            <article class="policy-card" id="section-1" data-keywords="eligibility scope student faculty registration cardholder authority jurisdiction">
+                <div class="policy-card-header">
+                    <div>
+                        <div class="policy-section-num">Section 01</div>
+                        <h2 class="policy-card-title">Institutional Scope & Membership Eligibility</h2>
+                    </div>
+                    <span class="policy-badge mandatory">Statutory</span>
+                </div>
+                <div class="policy-content">
+                    <p>
+                        The K.R. Mangalam University Central Library serves as the premier academic information center supporting undergraduate, postgraduate, doctoral research, and faculty scholarship across the School of Engineering & Technology (SoET), Management, Legal Studies, and Medical Sciences.
+                    </p>
+                    <p><strong>Eligible Cardholders include:</strong></p>
+                    <ul>
+                        <li><strong>Undergraduate & Postgraduate Students:</strong> Formally admitted students registered with a valid University Enrollment Roll Number.</li>
+                        <li><strong>Faculty Members:</strong> Regular and adjunct academic professors, associate professors, and visiting teaching faculty.</li>
+                        <li><strong>Research Scholars:</strong> Ph.D. and M.Tech research fellows under sponsored or university grant programs.</li>
+                        <li><strong>University Officers & Technical Staff:</strong> Administrative and lab staff with institutional staff codes.</li>
+                    </ul>
+                    <div class="policy-callout note">
+                        <svg class="callout-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <div>
+                            <strong>Automatic Catalog Sync:</strong> Membership accounts are synchronized with the university registrar database upon commencement of each academic semester.
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <!-- SECTION 2 -->
+            <article class="policy-card" id="section-2" data-keywords="smart card id card non-transferable barcode lost card verification security">
+                <div class="policy-card-header">
+                    <div>
+                        <div class="policy-section-num">Section 02</div>
+                        <h2 class="policy-card-title">Membership & Smart ID Card Regulations</h2>
+                    </div>
+                    <span class="policy-badge mandatory">Strict Enforcement</span>
+                </div>
+                <div class="policy-content">
+                    <p>
+                        Circulation desk transactions (issuing, returning, renewing, and fine assessment) require the physical or digital presentation of the institutional Smart ID Card.
+                    </p>
+                    <ol>
+                        <li><strong>Non-Transferability:</strong> A member's library card is non-transferable. Borrowing books on behalf of peers or using another student's barcode is strictly prohibited and constitutes academic misconduct.</li>
+                        <li><strong>Lost ID Cards:</strong> Loss of an ID card must be reported immediately to the Central Library circulation desk to flag the account and prevent fraudulent checkouts.</li>
+                        <li><strong>Card Replacement:</strong> Replacement smart cards carry a university administrative reissue fee of ₹200 via the Registrar's portal.</li>
+                        <li><strong>Address & Contact Updates:</strong> Members must ensure their registered email address and mobile phone number are kept up-to-date in the university portal to receive automatic due date reminders.</li>
+                    </ol>
+                </div>
+            </article>
+
+            <!-- SECTION 3 -->
+            <article class="policy-card" id="section-3" data-keywords="borrowing quotas limits loan durations days student faculty books reference non-circulating">
+                <div class="policy-card-header">
+                    <div>
+                        <div class="policy-section-num">Section 03</div>
+                        <h2 class="policy-card-title">Borrowing Quotas & Loan Durations</h2>
+                    </div>
+                    <span class="policy-badge info">Circulation Matrix</span>
+                </div>
+                <div class="policy-content">
+                    <p>
+                        To ensure equitable distribution of academic textbooks, reference titles, and technical volumes, the following entitlement matrix is strictly enforced by the LMS database engine:
+                    </p>
+
+                    <div class="policy-table-wrapper">
+                        <table class="policy-table">
+                            <thead>
+                                <tr>
+                                    <th>Member Category</th>
+                                    <th>Max Borrow Limit</th>
+                                    <th>Loan Duration</th>
+                                    <th>Max Renewals</th>
+                                    <th>Overdue Fine Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>Student (UG / PG)</strong></td>
+                                    <td>4 Volumes</td>
+                                    <td>14 Days</td>
+                                    <td>1 Time (14 days)</td>
+                                    <td>₹5.00 / day</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Research Scholar</strong></td>
+                                    <td>6 Volumes</td>
+                                    <td>21 Days</td>
+                                    <td>2 Times (14 days ea.)</td>
+                                    <td>₹5.00 / day</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Faculty Member</strong></td>
+                                    <td>8 Volumes</td>
+                                    <td>30 Days</td>
+                                    <td>2 Times (30 days ea.)</td>
+                                    <td>Exempt (Grace Period)</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Administrative Staff</strong></td>
+                                    <td>2 Volumes</td>
+                                    <td>14 Days</td>
+                                    <td>1 Time (14 days)</td>
+                                    <td>₹5.00 / day</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="policy-callout warning">
+                        <svg class="callout-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        <div>
+                            <strong>Non-Circulating Reference Material:</strong> Dictionaries, encyclopedias, journals, rare manuscripts, and project dissertations marked "Reference Only (REF)" cannot be checked out and must be consulted within the library reading hall.
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <!-- SECTION 4 -->
+            <article class="policy-card" id="section-4" data-keywords="overdue fines late return fee penalty calculation calculator suspension threshold">
+                <div class="policy-card-header">
+                    <div>
+                        <div class="policy-section-num">Section 04</div>
+                        <h2 class="policy-card-title">Overdue Fines & Penalty Schedule</h2>
+                    </div>
+                    <span class="policy-badge mandatory">Automated SQLite Calc</span>
+                </div>
+                <div class="policy-content">
+                    <p>
+                        Books returned after their scheduled due date disrupt catalog circulation. Fines are calculated automatically by the database on a calendar-day basis (including weekends and university breaks).
+                    </p>
+                    <ul>
+                        <li><strong>Standard Late Fee:</strong> ₹5.00 per day per book past the due date.</li>
+                        <li><strong>Extended Default (Day 15+):</strong> Escalates to ₹10.00 per day thereafter until the volume is physically checked in.</li>
+                        <li><strong>Automatic Account Suspension:</strong> Members with pending fines exceeding <strong>₹100.00</strong> or loans overdue by 14+ days will have their borrowing privileges automatically suspended.</li>
+                        <li><strong>Fine Payment Methods:</strong> Fines can be paid directly at the circulation counter via UPI, Debit Card, or added to semester fee dues.</li>
+                    </ul>
+
+                    <!-- Interactive Late Fee Calculator Widget -->
+                    <div class="calculator-widget">
+                        <div class="calculator-title">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                            <span>Interactive Overdue Fine Estimator</span>
+                        </div>
+                        <div class="calc-grid">
+                            <div class="calc-field">
+                                <label for="calc-member-type">Cardholder Type</label>
+                                <select id="calc-member-type">
+                                    <option value="student">Student (UG / PG) — ₹5.00/day</option>
+                                    <option value="researcher">Research Scholar — ₹5.00/day</option>
+                                    <option value="faculty">Faculty Member — Exempt</option>
+                                </select>
+                            </div>
+                            <div class="calc-field">
+                                <label for="calc-days-overdue">Number of Days Overdue</label>
+                                <input type="number" id="calc-days-overdue" min="1" max="180" value="7" placeholder="e.g. 7">
+                            </div>
+                            <div>
+                                <button type="button" class="btn btn-primary" onclick="PolicyApp.calculateFine()" style="white-space:nowrap;">Compute Fine</button>
+                            </div>
+                        </div>
+
+                        <div class="calc-result-box" id="calc-result-box">
+                            <div>
+                                <div style="font-size:0.75rem; color:#64748b; font-weight:600;">CALCULATED STATUTORY FINE</div>
+                                <div id="calc-breakdown-text" style="font-size:0.85rem; color:#1e293b;">7 days @ ₹5.00/day</div>
+                            </div>
+                            <div id="calc-total-amount" style="font-size:1.4rem; font-weight:800; color:#dc2626;">₹35.00</div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+            <!-- SECTION 5 -->
+            <article class="policy-card" id="section-5" data-keywords="reservations holds queue renewal pickup shelf expiry waitlist">
+                <div class="policy-card-header">
+                    <div>
+                        <div class="policy-section-num">Section 05</div>
+                        <h2 class="policy-card-title">Book Renewal & Reservation Queue Policy</h2>
+                    </div>
+                    <span class="policy-badge info">Self-Service</span>
+                </div>
+                <div class="policy-content">
+                    <p>
+                        Cardholders can reserve currently issued volumes or renew their active loans through the LMS online catalog desk or in person.
+                    </p>
+                    <ol>
+                        <li><strong>Renewals:</strong> Books may be renewed once for an additional 14 days, provided the book has not been reserved by another member and has no accrued overdue fines.</li>
+                        <li><strong>Hold Queue Quota:</strong> A maximum of <strong>2 simultaneous book holds</strong> may be active per student cardholder.</li>
+                        <li><strong>Hold Shelf Window:</strong> Once a reserved volume is returned, the reserving member will receive an automated notification. The volume will be held at the Circulation Hold Shelf for <strong>3 working days</strong> before being released to the next member in queue.</li>
+                    </ol>
+                </div>
+            </article>
+
+            <!-- SECTION 6 -->
+            <article class="policy-card" id="section-6" data-keywords="lost book damage defaced pages replacement cost processing fee surcharge">
+                <div class="policy-card-header">
+                    <div>
+                        <div class="policy-section-num">Section 06</div>
+                        <h2 class="policy-card-title">Lost, Damaged & Defaced Material Policy</h2>
+                    </div>
+                    <span class="policy-badge mandatory">Strict Liability</span>
+                </div>
+                <div class="policy-content">
+                    <p>
+                        Borrowers are personally responsible for the physical condition of all materials checked out under their account. Volumes should be inspected before leaving the circulation desk.
+                    </p>
+                    <ul>
+                        <li><strong>Defacing & Marking:</strong> Underlining, highlighting, folding page corners (dog-earing), or tearing book leaves is strictly forbidden.</li>
+                        <li><strong>Lost Book Settlement Options:</strong>
+                            <ol style="margin-top:0.5rem;">
+                                <li><strong>Physical Replacement:</strong> Provide an identical or newer publisher edition of the lost volume in brand new condition, plus a ₹100 processing and RFID re-tagging surcharge.</li>
+                                <li><strong>Financial Reimbursement:</strong> Pay the current market replacement price of the book as determined by the University Librarian, plus a 20% institutional acquisition surcharge.</li>
+                            </ol>
+                        </li>
+                    </ul>
+                </div>
+            </article>
+
+            <!-- SECTION 7 -->
+            <article class="policy-card" id="section-7" data-keywords="digital library computer lab wifi acceptable use ieee sciencedirect scraping security">
+                <div class="policy-card-header">
+                    <div>
+                        <div class="policy-section-num">Section 07</div>
+                        <h2 class="policy-card-title">Digital Library, Computer Lab & Wi-Fi Usage</h2>
+                    </div>
+                    <span class="policy-badge info">IT Governance</span>
+                </div>
+                <div class="policy-content">
+                    <p>
+                        The Digital Library & Computer Lab provides high-speed campus internet access and subscriptions to premier global research repositories including IEEE Xplore, ScienceDirect, SpringerLink, and DELNET.
+                    </p>
+                    <p><strong>Acceptable Use Regulations:</strong></p>
+                    <ul>
+                        <li>Digital terminals are dedicated exclusively to academic research, coursework, and thesis preparation.</li>
+                        <li>Mass scraping or automated bulk downloading of proprietary publisher journals is prohibited under publisher licensing agreements.</li>
+                        <li>Gaming, cryptocurrency mining, viewing offensive content, or installing unauthorized software on lab terminals is strictly forbidden.</li>
+                    </ul>
+                </div>
+            </article>
+
+            <!-- SECTION 8 -->
+            <article class="policy-card" id="section-8" data-keywords="silence reading hall etiquette mobile phones conduct disciplinary food drinks">
+                <div class="policy-card-header">
+                    <div>
+                        <div class="policy-section-num">Section 08</div>
+                        <h2 class="policy-card-title">Reading Hall Conduct & Silence Zones</h2>
+                    </div>
+                    <span class="policy-badge mandatory">Campus Conduct</span>
+                </div>
+                <div class="policy-content">
+                    <p>
+                        To foster an optimal study environment for all university members, adherence to the following decorum rules is mandatory:
+                    </p>
+                    <ul>
+                        <li><strong>Silence Zones:</strong> First and Second Floor Reading Halls are designated as Absolute Silence Zones. Group discussions are permitted exclusively in Ground Floor Collaborative Pods.</li>
+                        <li><strong>Mobile Phones:</strong> Mobile devices must be placed on silent mode. Voice calls must be taken outside library premises.</li>
+                        <li><strong>Food & Beverages:</strong> Food, snacks, and open beverages are strictly prohibited inside library halls to safeguard physical books and electronics. Only sealable water bottles are permitted.</li>
+                    </ul>
+                </div>
+            </article>
+
+            <!-- SECTION 9 -->
+            <article class="policy-card" id="section-9" data-keywords="privacy student data security gdpr audit log encryption records protection personal information">
+                <div class="policy-card-header">
+                    <div>
+                        <div class="policy-section-num">Section 09</div>
+                        <h2 class="policy-card-title">Student Data Privacy & Information Security Charter</h2>
+                    </div>
+                    <span class="policy-badge success">Privacy Shield</span>
+                </div>
+                <div class="policy-content">
+                    <p>
+                        K.R. Mangalam University Central Library is committed to safeguarding student and faculty personal data. This charter outlines our data collection, storage, and confidentiality practices.
+                    </p>
+                    <p><strong>1. Data Collected by the LMS:</strong></p>
+                    <ul>
+                        <li><strong>Identity Profile:</strong> Full Name, Student/Employee ID, Institutional Email, Contact Phone, and Department.</li>
+                        <li><strong>Circulation History:</strong> Books issued, due dates, return timestamps, renewal counts, and fine receipts.</li>
+                        <li><strong>System Audit Trails:</strong> Timestamped records of administrative actions (e.g., book catalog additions, card status updates) to prevent tampering.</li>
+                    </ul>
+                    <p><strong>2. Information Protection Standards:</strong></p>
+                    <ul>
+                        <li>Staff credentials are protected using salted cryptographic hashing (bcrypt).</li>
+                        <li>Circulation databases employ parameterized SQL queries to eliminate SQL injection vulnerabilities.</li>
+                        <li>Session cookies utilize HTTP-only protections with 24-hour expiration.</li>
+                        <li><strong>Zero Third-Party Sharing:</strong> Library data is never leased, sold, or shared with commercial advertising entities.</li>
+                    </ul>
+                    <p><strong>3. Student Rights:</strong></p>
+                    <p>
+                        Members have the right to inspect their complete borrowing history, review accrued fines, and request corrections to their contact profiles via the circulation desk or online student portal.
+                    </p>
+                </div>
+            </article>
+
+            <!-- SECTION 10 -->
+            <article class="policy-card" id="section-10" data-keywords="clearance no dues grievance contact librarian appeals address email phone">
+                <div class="policy-card-header">
+                    <div>
+                        <div class="policy-section-num">Section 10</div>
+                        <h2 class="policy-card-title">Clearance Certificates & Grievance Directory</h2>
+                    </div>
+                    <span class="policy-badge info">Administrative Support</span>
+                </div>
+                <div class="policy-content">
+                    <p>
+                        A formal "No Dues" Library Clearance Certificate is required prior to semester exam admit card issuance, semester promotion, and final degree conferral.
+                    </p>
+                    <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:1.25rem; margin-top:1rem;">
+                        <h4 style="font-size:0.95rem; font-weight:700; color:#0f172a; margin-bottom:0.5rem;">Central Library Administration Contact Directory</h4>
+                        <div style="font-size:0.85rem; line-height:1.6; color:#475569;">
+                            <div>👤 <strong>Chief Librarian:</strong> Dr. Rajesh Sharma (Room 101, Central Library Block)</div>
+                            <div>👤 <strong>Circulation In-Charge:</strong> Pooja Verma (Senior Assistant Librarian)</div>
+                            <div>📍 <strong>Address:</strong> K.R. Mangalam University Campus, Sohna Road, Gurugram, Haryana - 122103</div>
+                            <div>📧 <strong>Official Email:</strong> <a href="mailto:library@krmangalam.edu.in" style="color:#2563eb;">library@krmangalam.edu.in</a> / <a href="mailto:admin@library.edu" style="color:#2563eb;">admin@library.edu</a></div>
+                            <div>📞 <strong>Desk Intercom:</strong> Ext. 402 / 405 (Office hours: 09:00 AM – 06:00 PM)</div>
+                        </div>
+                    </div>
+                </div>
+            </article>
+
+        </main>
+    </div>
+
+    <!-- Bottom Acceptance & Quick Jump Action Box -->
+    <div style="max-width:1280px; margin:0 auto; padding:0 1.5rem;">
+        <div class="policy-footer-acceptance">
+            <h3>Understand & Comply with Library Regulations</h3>
+            <p>
+                By continuing to access the K.R. Mangalam University Central Library LMS, you acknowledge compliance with all borrowing bylaws, overdue fee structures, and the Student Privacy Charter.
+            </p>
+            <div style="display:flex; justify-content:center; gap:1rem; flex-wrap:wrap;">
+                <a href="index.html" class="btn btn-primary" style="padding:0.75rem 1.5rem; font-weight:700;">
+                    <span>Acknowledge & Open Catalog Dashboard &rarr;</span>
+                </a>
+                <a href="login.html" class="btn btn-outline" style="padding:0.75rem 1.5rem; font-weight:700;">
+                    <span>Go to Staff Login</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Footer -->
+    <footer class="policy-page-footer">
+        <div class="policy-page-footer-inner">
+            <div>
+                <div style="font-weight:700; color:#ffffff; font-size:1rem; margin-bottom:4px;">K.R. Mangalam University Central Library</div>
+                <div>CampusLib LMS Academic Edition 2026 &bull; Relational DBMS Course Demonstration</div>
+                <div style="font-size:0.78rem; color:#64748b; margin-top:4px;">Developed by Tushar Saini (Roll No: 2501730053) &bull; SoET Department</div>
+            </div>
+            <div style="display:flex; gap:1.5rem;">
+                <a href="index.html" style="color:#cbd5e1; text-decoration:none;">Dashboard</a>
+                <a href="login.html" style="color:#cbd5e1; text-decoration:none;">Staff Login</a>
+                <a href="#section-4" style="color:#cbd5e1; text-decoration:none;">Fine Rates</a>
+                <a href="#section-9" style="color:#cbd5e1; text-decoration:none;">Privacy Policy</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Interactive Script -->
+    <script>
+        const PolicyApp = {
+            init() {
+                this.setupScrollSpy();
+            },
+
+            calculateFine() {
+                const memberType = document.getElementById('calc-member-type').value;
+                const days = parseInt(document.getElementById('calc-days-overdue').value, 10) || 0;
+                const resultBox = document.getElementById('calc-result-box');
+                const breakdownText = document.getElementById('calc-breakdown-text');
+                const totalAmount = document.getElementById('calc-total-amount');
+
+                if (days <= 0) {
+                    alert('Please enter a valid number of overdue days (1 or more).');
+                    return;
+                }
+
+                if (memberType === 'faculty') {
+                    breakdownText.textContent = 'Faculty privilege: 30-day extended loan with grace period';
+                    totalAmount.textContent = '₹0.00';
+                    totalAmount.style.color = '#10b981';
+                    resultBox.classList.add('show');
+                    return;
+                }
+
+                // Calculation matching database trigger:
+                // First 7 days @ ₹5/day = ₹35
+                // Beyond 7 days @ ₹10/day
+                let fine = 0;
+                let breakdown = '';
+                if (days <= 7) {
+                    fine = days * 5.0;
+                    breakdown = `${days} days @ ₹5.00/day standard rate`;
+                } else {
+                    const firstSeven = 7 * 5.0;
+                    const remaining = (days - 7) * 10.0;
+                    fine = firstSeven + remaining;
+                    breakdown = `First 7 days @ ₹5.00 (=₹35) + ${days - 7} extended days @ ₹10.00 (=₹${remaining})`;
+                }
+
+                breakdownText.textContent = breakdown;
+                totalAmount.textContent = `₹${fine.toFixed(2)}`;
+                totalAmount.style.color = '#dc2626';
+                resultBox.classList.add('show');
+            },
+
+            filterArticles() {
+                const query = document.getElementById('policy-search-input').value.toLowerCase().trim();
+                const articles = document.querySelectorAll('.policy-card');
+                let matchCount = 0;
+
+                articles.forEach(article => {
+                    const text = article.textContent.toLowerCase();
+                    const keywords = (article.getAttribute('data-keywords') || '').toLowerCase();
+
+                    if (!query || text.includes(query) || keywords.includes(query)) {
+                        article.style.display = 'block';
+                        matchCount++;
+                    } else {
+                        article.style.display = 'none';
+                    }
+                });
+
+                const countBadge = document.getElementById('policy-match-count');
+                if (countBadge) {
+                    countBadge.textContent = `${matchCount} Section${matchCount === 1 ? '' : 's'}`;
+                }
+            },
+
+            setupScrollSpy() {
+                const links = document.querySelectorAll('.toc-link');
+                const sections = document.querySelectorAll('.policy-card');
+
+                window.addEventListener('scroll', () => {
+                    let current = '';
+                    sections.forEach(section => {
+                        const top = section.offsetTop - 150;
+                        if (window.scrollY >= top) {
+                            current = section.getAttribute('id');
+                        }
+                    });
+
+                    links.forEach(link => {
+                        link.classList.remove('active');
+                        if (link.getAttribute('href') === `#${current}`) {
+                            link.classList.add('active');
+                        }
+                    });
+                });
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            PolicyApp.init();
+        });
+    </script>
+</body>
+</html>
