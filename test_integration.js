@@ -165,7 +165,7 @@ setTimeout(async () => {
         const logoutRes = await request('POST', '/api/auth/logout', null, sessionCookie);
         console.log('7.1 Logout status:', logoutRes.status, 'Message:', logoutRes.body.message);
 
-        console.log('\n=== TEST 8: LOGIN & TERMS PAGES ROUTING ===');
+        console.log('\n=== TEST 8: LOGIN & TERMS PAGES ROUTING & HOME ACCESS GUARD ===');
         const loginPageRes = await request('GET', '/login');
         console.log('8.1 GET /login status:', loginPageRes.status, 'Has Login HTML:', typeof loginPageRes.body === 'string' && loginPageRes.body.includes('Portal Login'));
         if (loginPageRes.status !== 200 || !loginPageRes.body.includes('Portal Login')) {
@@ -178,9 +178,22 @@ setTimeout(async () => {
             throw new Error('/terms did not return terms.html');
         }
 
+        // Test Unauthenticated Home Page Access (MUST REDIRECT to /login)
+        const unauthHomeRes = await request('GET', '/');
+        console.log('8.3 Unauthenticated GET / status:', unauthHomeRes.status, 'Location header:', unauthHomeRes.headers['location']);
+        if (unauthHomeRes.status !== 302 || unauthHomeRes.headers['location'] !== '/login') {
+            throw new Error('Unauthenticated GET / was not redirected to /login!');
+        }
+
+        const unauthIndexRes = await request('GET', '/index.html');
+        console.log('8.4 Unauthenticated GET /index.html status:', unauthIndexRes.status, 'Location header:', unauthIndexRes.headers['location']);
+        if (unauthIndexRes.status !== 302 || unauthIndexRes.headers['location'] !== '/login') {
+            throw new Error('Unauthenticated GET /index.html was not redirected to /login!');
+        }
+
         const directLoginRes = await request('GET', '/login.html');
         const directTermsRes = await request('GET', '/terms.html');
-        console.log('8.3 Static /login.html status:', directLoginRes.status, '| /terms.html status:', directTermsRes.status);
+        console.log('8.5 Static /login.html status:', directLoginRes.status, '| /terms.html status:', directTermsRes.status);
         if (directLoginRes.status !== 200 || directTermsRes.status !== 200) {
             throw new Error('Direct static page access failed');
         }
