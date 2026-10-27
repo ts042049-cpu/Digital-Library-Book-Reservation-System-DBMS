@@ -67,6 +67,15 @@ app.all('/api/*', (req, res) => {
     });
 });
 
+// Dedicated page routes for Login and Terms/Policy
+app.get(['/login', '/login.html'], (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get(['/terms', '/terms.html', '/policy', '/policies', '/terms-and-policy', '/privacy'], (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'terms.html'));
+});
+
 // Static frontend assets
 app.use(express.static(path.join(__dirname, 'public')));
 
