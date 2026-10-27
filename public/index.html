@@ -7,6 +7,25 @@
     <link rel="icon" type="image/png" href="images/logo-transparent.png">
     <link rel="apple-touch-icon" href="images/logo.png">
     <link rel="stylesheet" href="css/style.css">
+    <script>
+        // Immediate Session Guard: Home page can ONLY be accessed via login
+        (function() {
+            try {
+                fetch('/api/auth/me', { credentials: 'include' })
+                    .then(function(res) { return res.json(); })
+                    .then(function(data) {
+                        if (!data || !data.authenticated) {
+                            window.location.replace('/login');
+                        }
+                    })
+                    .catch(function() {
+                        window.location.replace('/login');
+                    });
+            } catch(e) {
+                window.location.replace('/login');
+            }
+        })();
+    </script>
 </head>
 <body>
     <div class="app-container">
