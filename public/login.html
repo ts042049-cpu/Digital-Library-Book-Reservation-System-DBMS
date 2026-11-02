@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Login | K.R. Mangalam University Central Library LMS</title>
+    <link rel="icon" type="image/png" href="images/logo-transparent.png">
+    <link rel="apple-touch-icon" href="images/logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        :root {
+            --login-bg: #090d16;
+            --login-card-bg: rgba(15, 23, 42, 0.75);
+            --login-card-border: rgba(255, 255, 255, 0.12);
+            --login-glow-primary: rgba(37, 99, 235, 0.25);
+            --login-glow-emerald: rgba(16, 185, 129, 0.15);
+        }
+
+        body.login-page-body {
+            min-height: 100vh;
+            background-color: var(--login-bg);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(30, 58, 138, 0.35) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(5, 150, 105, 0.2) 0px, transparent 50%),
+                radial-gradient(at 50% 100%, rgba(37, 99, 235, 0.25) 0px, transparent 60%),
+                linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            color: #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Ambient animated blobs */
+        .ambient-blob-1 {
+            position: absolute;
+            width: 450px;
+            height: 450px;
+            top: -100px;
+            left: -100px;
+            background: radial-gradient(circle, rgba(37, 99, 235, 0.28) 0%, rgba(37, 99, 235, 0) 70%);
+            border-radius: 50%;
+            filter: blur(40px);
+            pointer-events: none;
+            animation: pulseBlob 8s ease-in-out infinite alternate;
+        }
+
+        .ambient-blob-2 {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            bottom: -150px;
+            right: -100px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0) 70%);
+            border-radius: 50%;
+            filter: blur(50px);
+            pointer-events: none;
+            animation: pulseBlob 10s ease-in-out infinite alternate-reverse;
+        }
+
+        @keyframes pulseBlob {
+            0% { transform: scale(1) translate(0, 0); opacity: 0.7; }
+            100% { transform: scale(1.15) translate(30px, -20px); opacity: 1; }
+        }
+
+        /* Top Bar */
+        .login-topbar {
+            padding: 1.25rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            z-index: 10;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(8px);
+            background: rgba(10, 15, 29, 0.4);
+        }
+
+        .login-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            text-decoration: none;
+            color: #ffffff;
+        }
+
+        .login-brand-logo {
+            width: 44px;
+            height: 44px;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+        }
+
+        .login-brand-text h1 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            color: #fff;
+        }
+
+        .login-brand-text span {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            font-weight: 500;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+        }
+
+        .login-top-nav {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .login-nav-link {
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: color 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.4rem 0.75rem;
+            border-radius: 6px;
+        }
+
+        .login-nav-link:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .system-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            background: rgba(16, 185, 129, 0.12);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #34d399;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background-color: #10b981;
+            box-shadow: 0 0 8px #10b981;
+            animation: statusPulse 2s infinite;
+        }
+
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+
+        /* Main Content Layout */
+        .login-main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2.5rem 1.5rem;
+            position: relative;
+            z-index: 5;
+        }
+
+        .login-container {
+            width: 100%;
+            max-width: 1080px;
+            display: grid;
+            grid-template-columns: 1fr 1.15fr;
+            gap: 2.5rem;
+            align-items: center;
+        }
+
+        /* Left Info / Hero Column */
+        .login-hero-col {
+            padding-right: 1rem;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.9rem;
+            border-radius: 9999px;
+            background: rgba(37, 99, 235, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            color: #60a5fa;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+        }
+
+        .hero-title {
+            font-size: 2.25rem;
+            font-weight: 800;
+            line-height: 1.2;
+            letter-spacing: -0.03em;
+            color: #ffffff;
+            margin-bottom: 1rem;
+        }
+
+        .hero-title span {
+            background: linear-gradient(135deg, #60a5fa 0%, #34d399 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-desc {
+            color: #94a3b8;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+        }
+
+        .hero-features {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.85rem;
+        }
+
+        .feature-icon-box {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: #60a5fa;
+        }
+
+        .feature-item-text h4 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #f1f5f9;
+            margin-bottom: 0.2rem;
+        }
+
+        .feature-item-text p {
+            font-size: 0.8rem;
+            color: #64748b;
+            line-height: 1.4;
+        }
+
+        .academic-badge-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 0.85rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .academic-badge-info {
+            font-size: 0.78rem;
+            color: #94a3b8;
+        }
+
+        .academic-badge-info strong {
+            color: #cbd5e1;
+            display: block;
+            font-size: 0.82rem;
+        }
+
+        /* Right Card Container */
+        .login-card {
+            background: var(--login-card-bg);
+            border: 1px solid var(--login-card-border);
+            border-radius: 16px;
+            padding: 2.25rem;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
+            position: relative;
+        }
+
+        /* Active Session Warning / Quick Jump */
+        #active-session-banner {
+            display: none;
+            background: rgba(37, 99, 235, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+            color: #bfdbfe;
+        }
+
+        #active-session-banner.show {
+            display: block;
+            animation: fadeInDown 0.3s ease;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Segmented Tabs */
+        .portal-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 4px;
+            margin-bottom: 1.75rem;
+            gap: 4px;
+        }
+
+        .portal-tab-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            padding: 0.65rem 0.85rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 7px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            font-family: inherit;
+        }
+
+        .portal-tab-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .portal-tab-btn.active {
+            background: rgba(37, 99, 235, 0.9);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+        }
+
+        .portal-tab-btn:hover:not(.active) {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        /* Form Styles */
+        .auth-form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .auth-label {
+            display: block;
+            font-size: 0.825rem;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-bottom: 0.45rem;
+        }
+
+        .auth-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .auth-input-icon {
+            position: absolute;
+            left: 14px;
+            width: 18px;
+            height: 18px;
+            color: #64748b;
+            pointer-events: none;
+            transition: color 0.15s ease;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.6rem;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 0.9rem;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .auth-input:focus {
+            border-color: #3b82f6;
+            background: rgba(15, 23, 42, 0.9);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+
+        .auth-input:focus + .auth-input-icon,
+        .auth-input-wrapper:focus-within .auth-input-icon {
+            color: #60a5fa;
+        }
+
+        .auth-input::placeholder {
+            color: #475569;
+        }
+
+        .btn-toggle-pw {
+            position: absolute;
+            right: 12px;
+            background: transparent;
+            border: none;
+            color: #64748b;
+            cursor: pointer;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: color 0.15s ease;
+        }
+
+        .btn-toggle-pw:hover {
+            color: #cbd5e1;
+        }
+
+        .form-row-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            font-size: 0.8rem;
+        }
+
+        .remember-checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #94a3b8;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .remember-checkbox-label input[type="checkbox"] {
+            accent-color: #2563eb;
+            width: 15px;
+            height: 15px;
+            cursor: pointer;
+        }
+
+        .btn-forgot-pw {
+            background: transparent;
+            border: none;
+            color: #60a5fa;
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+            padding: 0;
+            font-family: inherit;
+        }
+
+        .btn-forgot-pw:hover {
+            color: #93c5fd;
+        }
+
+        .btn-auth-submit {
+            width: 100%;
+            padding: 0.85rem 1.25rem;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            border: none;
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 0.95rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            font-family: inherit;
+        }
+
+        .btn-auth-submit:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.5);
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        }
+
+        .btn-auth-submit:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        .btn-auth-submit:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        /* Alert Notification inside card */
+        .auth-alert {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            line-height: 1.4;
+            margin-bottom: 1.25rem;
+            display: none;
+            align-items: flex-start;
+            gap: 0.6rem;
+        }
+
+        .auth-alert.show {
+            display: flex;
+            animation: fadeInDown 0.25s ease;
+        }
+
+        .auth-alert-error {
+            background: rgba(220, 38, 38, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            color: #fca5a5;
+        }
+
+        .auth-alert-success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+            color: #6ee7b7;
+        }
+
+        /* Quick Demo Staff Logins */
+        .demo-logins-section {
+            margin-top: 1.75rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .demo-logins-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #64748b;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .demo-logins-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+        }
+
+        .demo-chip-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            padding: 0.6rem 0.5rem;
+            color: #cbd5e1;
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-align: center;
+            font-family: inherit;
+        }
+
+        .demo-chip-btn:hover {
+            background: rgba(37, 99, 235, 0.15);
+            border-color: rgba(59, 130, 246, 0.4);
+            color: #93c5fd;
+            transform: translateY(-1px);
+        }
+
+        .demo-chip-btn strong {
+            display: block;
+            font-size: 0.8rem;
+            color: #fff;
+            margin-bottom: 2px;
+        }
+
+        .demo-chip-role {
+            font-size: 0.7rem;
+            color: #94a3b8;
+        }
+
+        /* Member Verification Tab Specifics */
+        .member-result-card {
+            display: none;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1rem;
+            animation: fadeInDown 0.3s ease;
+        }
+
+        .member-result-card.show {
+            display: block;
+        }
+
+        .member-stat-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            text-align: center;
+        }
+
+        .member-stat-box {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 0.4rem;
+            border-radius: 6px;
+        }
+
+        .member-stat-num {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #60a5fa;
+        }
+
+        .member-stat-lbl {
+            font-size: 0.7rem;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        /* Card Policy Footer */
+        .card-policy-footer {
+            margin-top: 1.5rem;
+            text-align: center;
+            font-size: 0.78rem;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        .card-policy-footer a {
+            color: #94a3b8;
+            text-decoration: underline;
+            text-underline-offset: 2px;
+            transition: color 0.15s ease;
+        }
+
+        .card-policy-footer a:hover {
+            color: #60a5fa;
+        }
+
+        /* Global Footer */
+        .login-footer {
+            padding: 1.5rem 2rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #64748b;
+            position: relative;
+            z-index: 10;
+            backdrop-filter: blur(8px);
+            background: rgba(10, 15, 29, 0.4);
+        }
+
+        .login-footer-links {
+            display: flex;
+            gap: 1.25rem;
+        }
+
+        .login-footer-links a {
+            color: #94a3b8;
+            text-decoration: none;
+            transition: color 0.15s ease;
+        }
+
+        .login-footer-links a:hover {
+            color: #ffffff;
+        }
+
+        /* Modal Backdrop for Help / Forgot Password */
+        .login-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 1rem;
+        }
+
+        .login-modal-overlay.open {
+            display: flex;
+            animation: fadeInDown 0.2s ease;
+        }
+
+        .login-modal-box {
+            background: #0f172a;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            width: 100%;
+            max-width: 480px;
+            padding: 1.75rem;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);
+            color: #f1f5f9;
+        }
+
+        .login-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .login-modal-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .login-modal-close {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            font-size: 1.5rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .login-modal-close:hover {
+            color: #fff;
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 900px) {
+            .login-container {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+            .login-hero-col {
+                text-align: center;
+                padding-right: 0;
+            }
+            .hero-badge {
+                margin: 0 auto 1rem auto;
+            }
+            .feature-item {
+                text-align: left;
+            }
+            .login-card {
+                padding: 1.75rem;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .login-topbar {
+                padding: 1rem;
+            }
+            .demo-logins-grid {
+                grid-template-columns: 1fr;
+            }
+            .login-footer {
+                flex-direction: column;
+                gap: 0.75rem;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body class="login-page-body">
+
+    <!-- Ambient glowing visual blobs -->
+    <div class="ambient-blob-1"></div>
+    <div class="ambient-blob-2"></div>
+
+    <!-- Top Navigation Bar -->
+    <header class="login-topbar">
+        <a href="index.html" class="login-brand" title="K.R. Mangalam University Central Library">
+            <img src="images/logo-transparent.png" alt="K.R. Mangalam University Logo" class="login-brand-logo">
+            <div class="login-brand-text">
+                <h1>K.R. Mangalam University</h1>
+                <span>Central Library LMS & Circulation Desk</span>
+            </div>
+        </a>
+
+        <div class="login-top-nav">
+            <span class="system-status-pill">
+                <span class="status-dot"></span>
+                <span>System Online • SQLite Active</span>
+            </span>
+
+            <a href="index.html" class="login-nav-link">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:16px;height:16px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                <span>Catalog Dashboard</span>
+            </a>
+
+            <a href="terms.html" class="login-nav-link">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:16px;height:16px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span>Terms & Policies</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="login-main">
+        <div class="login-container">
+            
+            <!-- Left Info / Institutional Highlight Column -->
+            <div class="login-hero-col">
+                <div class="hero-badge">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:16px;height:16px;">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <span>Secure Academic Circulation Access</span>
+                </div>
+
+                <h2 class="hero-title">Academic Library <span>Management Portal</span></h2>
+                <p class="hero-desc">
+                    Welcome to the central authentication desk for K.R. Mangalam University Central Library. Access full catalog circulation, student loans, fine collections, and DBMS audit registries.
+                </p>
+
+                <div class="hero-features">
+                    <div class="feature-item">
+                        <div class="feature-icon-box">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:20px;height:20px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                            </svg>
+                        </div>
+                        <div class="feature-item-text">
+                            <h4>Real-Time Circulation & Inventory</h4>
+                            <p>Track 70+ volumes across CS, Engineering, Mathematics, and Literature with automated copy count sync.</p>
+                        </div>
+                    </div>
+
+                    <div class="feature-item">
+                        <div class="feature-icon-box">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:20px;height:20px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <div class="feature-item-text">
+                            <h4>Automated Fine & Overdue Calculations</h4>
+                            <p>Dynamic overdue fine tracking with statutory ₹5/day penalty calculation and instant clearance slips.</p>
+                        </div>
+                    </div>
+
+                    <div class="feature-item">
+                        <div class="feature-icon-box">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:20px;height:20px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                        </div>
+                        <div class="feature-item-text">
+                            <h4>Role-Based Access & Transaction Audit</h4>
+                            <p>Strict role demarcation for Admins, Librarians, and Assistants with ACID transaction journaling.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="academic-badge-card">
+                    <div class="academic-badge-info">
+                        <strong>K.R. Mangalam University • SoET</strong>
+                        <span>DBMS Practical Project | Roll No: 2501730053 (Tushar Saini)</span>
+                    </div>
+                    <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; font-size: 0.72rem; font-weight: 700; padding: 3px 8px; border-radius: 4px;">Verified Build</span>
+                </div>
+            </div>
+
+            <!-- Right Glassmorphism Authentication Box -->
+            <div class="login-card">
+                
+                <!-- Existing Active Session Alert -->
+                <div id="active-session-banner">
+                    <div style="display:flex; align-items:center; justify-content:space-between;">
+                        <div>
+                            <strong>Active Session Detected:</strong>
+                            <div id="active-session-name" style="font-size:0.8rem; margin-top:2px;">Logged in as Dr. Rajesh Sharma (Admin)</div>
+                        </div>
+                        <div style="display:flex; gap:0.5rem;">
+                            <a href="index.html" class="btn btn-sm btn-primary" style="padding: 4px 10px; font-size:0.75rem;">Dashboard &rarr;</a>
+                            <button type="button" class="btn btn-sm btn-outline" style="padding: 4px 10px; font-size:0.75rem; border-color:rgba(255,255,255,0.2); color:#fff;" onclick="LoginPage.handleSessionLogout()">Logout</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Switcher -->
+                <div class="portal-tabs">
+                    <button class="portal-tab-btn active" id="tab-btn-staff" onclick="LoginPage.switchTab('staff')">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>Staff Login</span>
+                    </button>
+                    <button class="portal-tab-btn" id="tab-btn-member" onclick="LoginPage.switchTab('member')">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                        <span>Student / Cardholder</span>
+                    </button>
+                </div>
+
+                <!-- Notification Alerts -->
+                <div class="auth-alert" id="auth-alert-box">
+                    <span id="auth-alert-icon"></span>
+                    <span id="auth-alert-text"></span>
+                </div>
+
+                <!-- TAB 1: STAFF LOGIN FORM -->
+                <div id="portal-staff-view">
+                    <form id="login-staff-form" onsubmit="LoginPage.submitStaffLogin(event)">
+                        
+                        <div class="auth-form-group">
+                            <label class="auth-label" for="login-username">Staff Email or Employee ID</label>
+                            <div class="auth-input-wrapper">
+                                <input type="text" id="login-username" class="auth-input" placeholder="admin@library.edu or STF-101" required autocomplete="username">
+                                <svg class="auth-input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div class="auth-form-group">
+                            <label class="auth-label" for="login-password">Password</label>
+                            <div class="auth-input-wrapper">
+                                <input type="password" id="login-password" class="auth-input" placeholder="••••••••" required autocomplete="current-password">
+                                <svg class="auth-input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                                <button type="button" class="btn-toggle-pw" id="btn-toggle-password" onclick="LoginPage.togglePasswordVisibility()" title="Show/Hide Password" aria-label="Toggle password visibility">
+                                    <svg id="eye-icon-show" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:18px;height:18px;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    <svg id="eye-icon-hide" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:18px;height:18px;display:none;">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="form-row-meta">
+                            <label class="remember-checkbox-label">
+                                <input type="checkbox" id="remember-me-checkbox" checked>
+                                <span>Remember my credentials</span>
+                            </label>
+
+                            <button type="button" class="btn-forgot-pw" onclick="LoginPage.openHelpModal()">Forgot Password?</button>
+                        </div>
+
+                        <button type="submit" class="btn-auth-submit" id="btn-login-submit">
+                            <span id="login-btn-spinner" style="display:none;">
+                                <svg class="spinner-icon" style="width:18px;height:18px;animation:spin 1s linear infinite;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0110 10" stroke-linecap="round"/></svg>
+                            </span>
+                            <span id="login-btn-text">Sign In to Circulation Desk</span>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:16px;height:16px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                            </svg>
+                        </button>
+                    </form>
+
+                    <!-- Quick 1-Click Demo Profiles for Viva & Testing -->
+                    <div class="demo-logins-section">
+                        <div class="demo-logins-title">
+                            <span>Quick Demo Logins (Click to Autofill & Login)</span>
+                            <span style="color:#34d399;font-weight:600;">Viva Presets</span>
+                        </div>
+                        <div class="demo-logins-grid">
+                            <button type="button" class="demo-chip-btn" onclick="LoginPage.fillAndLogin('admin@library.edu', 'admin123')">
+                                <strong>👑 Admin</strong>
+                                <span class="demo-chip-role">Dr. Rajesh Sharma</span>
+                            </button>
+                            <button type="button" class="demo-chip-btn" onclick="LoginPage.fillAndLogin('pooja.verma@library.edu', 'lib123')">
+                                <strong>📚 Librarian</strong>
+                                <span class="demo-chip-role">Pooja Verma</span>
+                            </button>
+                            <button type="button" class="demo-chip-btn" onclick="LoginPage.fillAndLogin('amit.k@library.edu', 'lib123')">
+                                <strong>📋 Assistant</strong>
+                                <span class="demo-chip-role">Amit Kumar</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 2: STUDENT & CARDHOLDER VERIFICATION -->
+                <div id="portal-member-view" style="display:none;">
+                    <p style="font-size:0.85rem; color:#94a3b8; line-height:1.5; margin-bottom:1.25rem;">
+                        Students, Faculty, and Research scholars can check borrowing quota, active book loans, and fine status using their Library Card ID or University Email.
+                    </p>
+
+                    <form id="member-verify-form" onsubmit="LoginPage.verifyMember(event)">
+                        <div class="auth-form-group">
+                            <label class="auth-label" for="member-search-input">Student / Faculty Card ID or Email</label>
+                            <div class="auth-input-wrapper">
+                                <input type="text" id="member-search-input" class="auth-input" placeholder="e.g. MEM-2026-001 or tushar.saini@student.edu" required>
+                                <svg class="auth-input-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-auth-submit" id="btn-verify-member" style="background: linear-gradient(135deg, #059669 0%, #047857 100%); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);">
+                            <span>Verify Card & Active Loans</span>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:16px;height:16px;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </button>
+                    </form>
+
+                    <!-- Quick member demo chips -->
+                    <div style="margin-top:1.25rem;">
+                        <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.06em; color:#64748b; font-weight:700; margin-bottom:0.5rem;">
+                            Demo Student & Faculty Cards
+                        </div>
+                        <div style="display:flex; flex-wrap:wrap; gap:0.4rem;">
+                            <button type="button" class="btn btn-sm btn-outline" style="border-color:rgba(255,255,255,0.15); color:#cbd5e1; font-size:0.75rem;" onclick="LoginPage.fillMember('MEM-2026-001')">
+                                Tushar Saini (Student)
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline" style="border-color:rgba(255,255,255,0.15); color:#cbd5e1; font-size:0.75rem;" onclick="LoginPage.fillMember('MEM-2026-004')">
+                                Dr. Sunita Rao (Faculty)
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline" style="border-color:rgba(255,255,255,0.15); color:#cbd5e1; font-size:0.75rem;" onclick="LoginPage.fillMember('MEM-2026-005')">
+                                Rohan Mehta (Overdue)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Cardholder Result -->
+                    <div class="member-result-card" id="member-result-box">
+                        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem;">
+                            <div>
+                                <h4 id="card-holder-name" style="font-size:0.95rem; font-weight:700; color:#fff;">Student Name</h4>
+                                <div id="card-holder-code" style="font-size:0.75rem; color:#94a3b8;">MEM-2026-001 &bull; Student</div>
+                            </div>
+                            <span id="card-status-badge" style="font-size:0.75rem; font-weight:700; padding:3px 8px; border-radius:4px; background:#10b981; color:#fff;">Active</span>
+                        </div>
+
+                        <div class="member-stat-row">
+                            <div class="member-stat-box">
+                                <div class="member-stat-num" id="card-borrowed-count">0</div>
+                                <div class="member-stat-lbl">Books Borrowed</div>
+                            </div>
+                            <div class="member-stat-box">
+                                <div class="member-stat-num" id="card-quota-count">4</div>
+                                <div class="member-stat-lbl">Borrow Limit</div>
+                            </div>
+                            <div class="member-stat-box">
+                                <div class="member-stat-num" id="card-fines-amt" style="color:#f87171;">₹0.00</div>
+                                <div class="member-stat-lbl">Pending Fines</div>
+                            </div>
+                        </div>
+
+                        <div style="margin-top:1rem; display:flex; justify-content:space-between; align-items:center;">
+                            <a href="index.html" class="btn btn-sm btn-primary" style="width:100%; text-align:center;">Open Library Catalog &rarr;</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Terms and Privacy Footer Note -->
+                <div class="card-policy-footer">
+                    By accessing the portal, you agree to the University Central Library 
+                    <a href="terms.html">Terms of Service & Borrowing Regulations</a> and 
+                    <a href="terms.html#privacy">Data Privacy Charter</a>.
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Global Footer -->
+    <footer class="login-footer">
+        <div>
+            &copy; 2026 K.R. Mangalam University &bull; Central Academic Library LMS
+        </div>
+        <div class="login-footer-links">
+            <a href="terms.html">Terms of Service</a>
+            <a href="terms.html#fines">Overdue Policies</a>
+            <a href="terms.html#privacy">Student Privacy</a>
+            <a href="index.html">Main Catalog</a>
+        </div>
+    </footer>
+
+    <!-- Help & Support / Forgot Password Modal -->
+    <div class="login-modal-overlay" id="help-modal">
+        <div class="login-modal-box">
+            <div class="login-modal-header">
+                <h3 class="login-modal-title">Library Staff Credentials Support</h3>
+                <button type="button" class="login-modal-close" onclick="LoginPage.closeHelpModal()">&times;</button>
+            </div>
+            <div style="font-size:0.875rem; line-height:1.6; color:#cbd5e1;">
+                <p style="margin-bottom:0.75rem;">
+                    For security purposes, Staff password changes and resets require authorization from the Central Library Administrator or Campus IT Support.
+                </p>
+                <div style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:0.85rem; margin-bottom:1rem;">
+                    <div style="font-weight:600; color:#fff; margin-bottom:4px;">Central Library Desk Helpdesk</div>
+                    <div>📍 Location: Central Library 1st Floor, Circulation Room 102</div>
+                    <div>📧 Email: <a href="mailto:admin@library.edu" style="color:#60a5fa;">admin@library.edu</a> / <a href="mailto:pooja.verma@library.edu" style="color:#60a5fa;">pooja.verma@library.edu</a></div>
+                    <div>📞 Campus Intercom: Ext. 402 / 405 (Mon–Sat 09:00 AM – 06:00 PM)</div>
+                </div>
+                <p style="font-size:0.8rem; color:#94a3b8;">
+                    <strong>Viva Demonstration Note:</strong> For testing and grading, you can use the default evaluation credentials listed on the login page:
+                    <code>admin@library.edu / admin123</code> or <code>pooja.verma@library.edu / lib123</code>.
+                </p>
+            </div>
+            <div style="margin-top:1.25rem; display:flex; justify-content:flex-end;">
+                <button type="button" class="btn btn-primary" onclick="LoginPage.closeHelpModal()">Got It</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page Logic Script -->
+    <script src="js/api.js"></script>
+    <script>
+        const LoginPage = {
+            activeTab: 'staff',
+
+            init() {
+                this.checkExistingSession();
+                this.loadSavedCredentials();
+            },
+
+            switchTab(tab) {
+                this.activeTab = tab;
+                const btnStaff = document.getElementById('tab-btn-staff');
+                const btnMember = document.getElementById('tab-btn-member');
+                const viewStaff = document.getElementById('portal-staff-view');
+                const viewMember = document.getElementById('portal-member-view');
+
+                this.hideAlert();
+
+                if (tab === 'staff') {
+                    btnStaff.classList.add('active');
+                    btnMember.classList.remove('active');
+                    viewStaff.style.display = 'block';
+                    viewMember.style.display = 'none';
+                } else {
+                    btnMember.classList.add('active');
+                    btnStaff.classList.remove('active');
+                    viewStaff.style.display = 'none';
+                    viewMember.style.display = 'block';
+                }
+            },
+
+            showAlert(message, type = 'error') {
+                const box = document.getElementById('auth-alert-box');
+                const text = document.getElementById('auth-alert-text');
+                const icon = document.getElementById('auth-alert-icon');
+
+                box.className = `auth-alert show ${type === 'error' ? 'auth-alert-error' : 'auth-alert-success'}`;
+                text.textContent = message;
+                icon.innerHTML = type === 'error' 
+                    ? '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:18px;height:18px;flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+                    : '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:18px;height:18px;flex-shrink:0;"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>';
+            },
+
+            hideAlert() {
+                const box = document.getElementById('auth-alert-box');
+                box.className = 'auth-alert';
+            },
+
+            togglePasswordVisibility() {
+                const pwInput = document.getElementById('login-password');
+                const showIcon = document.getElementById('eye-icon-show');
+                const hideIcon = document.getElementById('eye-icon-hide');
+
+                if (pwInput.type === 'password') {
+                    pwInput.type = 'text';
+                    showIcon.style.display = 'none';
+                    hideIcon.style.display = 'block';
+                } else {
+                    pwInput.type = 'password';
+                    showIcon.style.display = 'block';
+                    hideIcon.style.display = 'none';
+                }
+            },
+
+            async checkExistingSession() {
+                try {
+                    const data = await ApiService.auth.me();
+                    if (data && data.authenticated && data.user) {
+                        const banner = document.getElementById('active-session-banner');
+                        const nameEl = document.getElementById('active-session-name');
+                        if (banner && nameEl) {
+                            nameEl.textContent = `Logged in as ${data.user.full_name} (${data.user.role} • ${data.user.staff_code})`;
+                            banner.classList.add('show');
+                        }
+                    }
+                } catch (e) {
+                    console.log('Session check:', e.message);
+                }
+            },
+
+            async handleSessionLogout() {
+                try {
+                    await ApiService.auth.logout();
+                    const banner = document.getElementById('active-session-banner');
+                    if (banner) banner.classList.remove('show');
+                    this.showAlert('Logged out of previous session.', 'success');
+                } catch (err) {
+                    this.showAlert('Error during logout: ' + err.message, 'error');
+                }
+            },
+
+            loadSavedCredentials() {
+                try {
+                    const savedUser = localStorage.getItem('campuslib_remembered_user');
+                    if (savedUser) {
+                        const input = document.getElementById('login-username');
+                        if (input) input.value = savedUser;
+                    }
+                } catch (e) {}
+            },
+
+            fillAndLogin(username, password) {
+                this.switchTab('staff');
+                document.getElementById('login-username').value = username;
+                document.getElementById('login-password').value = password;
+                this.submitStaffLogin(new Event('submit'));
+            },
+
+            async submitStaffLogin(e) {
+                if (e && e.preventDefault) e.preventDefault();
+
+                const username = document.getElementById('login-username').value.trim();
+                const password = document.getElementById('login-password').value;
+                const rememberMe = document.getElementById('remember-me-checkbox').checked;
+
+                if (!username || !password) {
+                    this.showAlert('Please enter both your email/ID and password.', 'error');
+                    return;
+                }
+
+                const submitBtn = document.getElementById('btn-login-submit');
+                const spinner = document.getElementById('login-btn-spinner');
+                const btnText = document.getElementById('login-btn-text');
+
+                submitBtn.disabled = true;
+                spinner.style.display = 'inline-block';
+                btnText.textContent = 'Verifying Credentials...';
+                this.hideAlert();
+
+                try {
+                    const res = await ApiService.auth.login(username, password);
+                    if (!res.success) throw new Error(res.message || 'Login failed.');
+
+                    if (rememberMe) {
+                        try { localStorage.setItem('campuslib_remembered_user', username); } catch(e){}
+                    } else {
+                        try { localStorage.removeItem('campuslib_remembered_user'); } catch(e){}
+                    }
+
+                    this.showAlert(`Welcome back, ${res.user.full_name}! Redirecting to dashboard...`, 'success');
+
+                    // Smooth redirect to main dashboard
+                    setTimeout(() => {
+                        const params = new URLSearchParams(window.location.search);
+                        const returnUrl = params.get('redirect') || 'index.html';
+                        window.location.href = returnUrl;
+                    }, 800);
+
+                } catch (err) {
+                    this.showAlert(err.message || 'Invalid username or password.', 'error');
+                } finally {
+                    submitBtn.disabled = false;
+                    spinner.style.display = 'none';
+                    btnText.textContent = 'Sign In to Circulation Desk';
+                }
+            },
+
+            fillMember(code) {
+                this.switchTab('member');
+                document.getElementById('member-search-input').value = code;
+                this.verifyMember(new Event('submit'));
+            },
+
+            async verifyMember(e) {
+                if (e && e.preventDefault) e.preventDefault();
+
+                const query = document.getElementById('member-search-input').value.trim();
+                if (!query) {
+                    this.showAlert('Please enter a Member ID or Email to verify.', 'error');
+                    return;
+                }
+
+                const btn = document.getElementById('btn-verify-member');
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<span>Checking Database...</span>';
+                this.hideAlert();
+
+                try {
+                    const res = await ApiService.get('/api/members', { search: query });
+                    if (!res.success || !res.members || res.members.length === 0) {
+                        throw new Error(`No member account found matching "${query}". Please check your ID card or register at the circulation desk.`);
+                    }
+
+                    const member = res.members[0];
+                    const resultBox = document.getElementById('member-result-box');
+                    document.getElementById('card-holder-name').textContent = member.full_name;
+                    document.getElementById('card-holder-code').textContent = `${member.member_code} • ${member.membership_type} (${member.email})`;
+                    
+                    const badge = document.getElementById('card-status-badge');
+                    badge.textContent = member.status;
+                    badge.style.background = member.status === 'Active' ? '#10b981' : (member.status === 'Suspended' ? '#dc2626' : '#f59e0b');
+
+                    document.getElementById('card-borrowed-count').textContent = member.currently_borrowed || 0;
+                    document.getElementById('card-quota-count').textContent = member.max_borrow_limit || 4;
+                    document.getElementById('card-fines-amt').textContent = `₹${parseFloat(member.pending_fines || 0).toFixed(2)}`;
+
+                    resultBox.classList.add('show');
+                    this.showAlert(`Verified Cardholder: ${member.full_name} (${member.status})`, 'success');
+
+                } catch (err) {
+                    document.getElementById('member-result-box').classList.remove('show');
+                    this.showAlert(err.message, 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
+                }
+            },
+
+            openHelpModal() {
+                document.getElementById('help-modal').classList.add('open');
+            },
+
+            closeHelpModal() {
+                document.getElementById('help-modal').classList.remove('open');
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            LoginPage.init();
+        });
+    </script>
+</body>
+</html>

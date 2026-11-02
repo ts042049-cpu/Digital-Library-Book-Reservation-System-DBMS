@@ -35,6 +35,7 @@ app.use(session({
     cookie: {
         httpOnly: true,
         secure: false,
+        sameSite: 'lax',
         maxAge: 1000 * 60 * 60 * 24 // 24-hour session
     }
 }));
@@ -54,12 +55,46 @@ app.use((req, res, next) => {
 // REST API Endpoints
 app.use('/api', apiRoutes);
 
-// Static frontend assets
-app.use(express.static(path.join(__dirname, 'public')));
+// Fallback for non-existent API routes (must precede frontend catch-all)
+app.all('/api/*', (req, res) => {
+    res.status(404).json({
+        success: false,
+        message: `API endpoint '${req.method} ${req.originalUrl}' was not found.`
+    });
+});
 
-// Fallback to single page interface
-app.use((req, res) => {
+// Dedicated public page routes for Login and Terms/Policy
+app.get(['/login', '/login.html'], (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.get(['/terms', '/terms.html', '/policy', '/policies', '/terms-and-policy', '/privacy'], (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'terms.html'));
+});
+
+// Authentication Guard: ONLY authenticated users can access the home page/dashboard
+function requireHomeSession(req, res, next) {
+    if (req.session && req.session.user) {
+        return next();
+    }
+    // Any unauthenticated attempt to open the home page is redirected strictly to /login
+    return res.redirect('/login');
+}
+
+// Protected Home Page routes (must be authenticated via login to access)
+app.get(['/', '/index.html', '/dashboard', '/home'], requireHomeSession, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Static frontend assets (styles, scripts, images) - index: false ensures index.html cannot bypass auth
+app.use(express.static(path.join(__dirname, 'public'), { index: false }));
+
+// Fallback for client-side navigation: protect home page
+app.use((req, res) => {
+    if (req.session && req.session.user) {
+        return res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    }
+    return res.redirect('/login');
 });
 
 // Centralized Error handling middleware
@@ -72,6 +107,7 @@ app.use((err, req, res, next) => {
     });
 });
 
+<<<<<<< HEAD
 // Start the HTTP listeners only after MongoDB is reachable & seeded.
 async function start() {
     try {
@@ -89,11 +125,26 @@ async function start() {
     const primaryServer = app.listen(PRIMARY_PORT, () => {
         console.log('================================================================');
         console.log(`   KRMU LIBRARY - K.R. MANGALAM UNIVERSITY`);
+=======
+let primaryServer = null;
+let secondaryServer = null;
+
+function startServers() {
+    if (primaryServer) return;
+
+    primaryServer = app.listen(PRIMARY_PORT, () => {
+        console.log('================================================================');
+        console.log(`   CAMPUSLIB - ACADEMIC LIBRARY MANAGEMENT SYSTEM`);
+>>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
         console.log(`   Primary Server Running At:   http://localhost:${PRIMARY_PORT}`);
         if (PRIMARY_PORT !== SECONDARY_PORT) {
             console.log(`   Secondary Server Running At: http://localhost:${SECONDARY_PORT}`);
         }
+<<<<<<< HEAD
         console.log(`   Active Database Engine:      MongoDB (database: ${MONGO_DB_NAME})`);
+=======
+        console.log(`   Active Database Engine:      SQLite (with MySQL 8.0 support)`);
+>>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
         console.log(`   Session Authentication:      Enabled (credentials: include)`);
         console.log('================================================================');
     });
@@ -108,7 +159,11 @@ async function start() {
 
     if (PRIMARY_PORT !== SECONDARY_PORT) {
         try {
+<<<<<<< HEAD
             const secondaryServer = app.listen(SECONDARY_PORT, () => {
+=======
+            secondaryServer = app.listen(SECONDARY_PORT, () => {
+>>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
                 console.log(`[DualPort] Secondary server active on http://localhost:${SECONDARY_PORT}`);
             });
             secondaryServer.on('error', (err) => {
@@ -120,9 +175,38 @@ async function start() {
     }
 }
 
+<<<<<<< HEAD
 start();
 
 // Error & signal handlers to keep server robust
+=======
+function stopServers() {
+    if (primaryServer) {
+        primaryServer.close();
+        primaryServer = null;
+    }
+    if (secondaryServer) {
+        secondaryServer.close();
+        secondaryServer = null;
+    }
+}
+
+// Auto-start when executed directly as main script
+if (require.main === module) {
+    startServers();
+}
+
+function gracefulShutdown(signal) {
+    console.log(`[Server] Received ${signal}. Closing active listeners...`);
+    stopServers();
+    process.exit(0);
+}
+
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+
+// Error handlers for unhandled rejections
+>>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
 process.on('uncaughtException', (err) => {
     console.error('[Uncaught Exception]:', err);
 });
@@ -131,6 +215,7 @@ process.on('unhandledRejection', (reason, promise) => {
     console.error('[Unhandled Rejection]:', reason);
 });
 
+<<<<<<< HEAD
 process.on('SIGINT', async () => {
     console.log('[Server] Received SIGINT (ignored to keep daemon alive)');
 });
@@ -147,6 +232,11 @@ process.on('SIGBREAK', () => {
 if (process.stdin.isTTY) {
     process.stdin.resume();
 }
+=======
+// Attach helper methods to app export for testing and programmatic usage
+app.startServers = startServers;
+app.stopServers = stopServers;
+>>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
 
 module.exports = app;
 module.exports.closeDatabase = close;

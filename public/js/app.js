@@ -22,10 +22,17 @@ const App = {
      * Initialize Application on DOM Ready
      */
     async init() {
+        // 1. Mandatory Session Guard: Home page requires prior authentication
+        const isAuthenticated = await this.checkCurrentSession();
+        if (!isAuthenticated) {
+            return; // Halt all operations, redirecting to login.html
+        }
+
         this.setupNavigation();
         this.setupEventListeners();
         this.updateDateDisplay();
 
+<<<<<<< HEAD
         // 1. Check current authenticated session via GET /api/auth/me
         const isAuthenticated = await this.checkCurrentSession();
 
@@ -35,6 +42,13 @@ const App = {
         } else {
             this.showLoginGate();
         }
+=======
+        // 2. Load initial dashboard data
+        this.navigate('dashboard');
+
+        // 3. Load staff accounts for role switcher / profile demo
+        this.loadStaffList();
+>>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
     },
 
     /**
@@ -47,8 +61,13 @@ const App = {
                 this.setCurrentUser(data.user);
                 return true;
             }
+            // Not authenticated: home page is locked -> go to login page
+            window.location.replace('login.html');
+            return false;
         } catch (err) {
-            console.warn('[Session] Session check fallback:', err.message);
+            console.warn('[Session] Session check failed, redirecting to login:', err.message);
+            window.location.replace('login.html');
+            return false;
         }
         return false;
     },
@@ -297,6 +316,9 @@ const App = {
             case 'viva':
                 // Static DBMS specifications view
                 break;
+            case 'terms':
+                // Static terms & policies view
+                break;
         }
     },
 
@@ -435,6 +457,24 @@ const App = {
         if (btnAuth) {
             btnAuth.addEventListener('click', () => this.openModal('modal-auth'));
         }
+
+        // Close modal on backdrop click
+        document.querySelectorAll('.modal-backdrop').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-backdrop.active').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+            }
+        });
     },
 
     // ====================================================================
@@ -648,7 +688,7 @@ const App = {
                                 <td>
                                     <div class="table-actions">
                                         <button class="btn btn-sm btn-outline" onclick="App.openEditBookModal(${b.book_id})">Edit</button>
-                                        <button class="btn btn-sm btn-outline" style="color:var(--danger-600);" onclick="App.deleteBook(${b.book_id}, '${this.escapeJs(b.title)}')">Delete</button>
+                                        <button class="btn btn-sm btn-outline" style="color:var(--danger-600);" onclick="App.deleteBook(${b.book_id})">Delete</button>
                                     </div>
                                 </td>
                             </tr>
@@ -703,6 +743,13 @@ const App = {
 
     async handleSaveBook(e) {
         e.preventDefault();
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span>Saving...</span>';
+        }
+
         const bookId = document.getElementById('book-form-id').value;
         const payload = {
             isbn: document.getElementById('book-isbn').value.trim(),
@@ -728,10 +775,17 @@ const App = {
             this.loadBooks();
         } catch (err) {
             this.showToast(err.message, 'error');
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
         }
     },
 
-    async deleteBook(bookId, title) {
+    async deleteBook(bookId) {
+        const book = this.state.books.find(b => b.book_id === parseInt(bookId, 10));
+        const title = book ? book.title : 'this book';
         if (!confirm(`Are you sure you want to remove "${title}" from the catalog?`)) {
             return;
         }
@@ -792,7 +846,7 @@ const App = {
                                 <td>
                                     <div class="table-actions">
                                         <button class="btn btn-sm btn-outline" onclick="App.openEditMemberModal(${m.member_id})">Edit</button>
-                                        <button class="btn btn-sm btn-outline" style="color:var(--danger-600);" onclick="App.deleteMember(${m.member_id}, '${this.escapeJs(m.full_name)}')">Delete</button>
+                                        <button class="btn btn-sm btn-outline" style="color:var(--danger-600);" onclick="App.deleteMember(${m.member_id})">Delete</button>
                                     </div>
                                 </td>
                             </tr>
@@ -828,6 +882,13 @@ const App = {
 
     async handleSaveMember(e) {
         e.preventDefault();
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span>Saving...</span>';
+        }
+
         const memberId = document.getElementById('member-form-id').value;
         const payload = {
             full_name: document.getElementById('member-name').value.trim(),
@@ -851,10 +912,17 @@ const App = {
             this.loadMembers();
         } catch (err) {
             this.showToast(err.message, 'error');
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
         }
     },
 
-    async deleteMember(memberId, name) {
+    async deleteMember(memberId) {
+        const member = this.state.members.find(m => m.member_id === parseInt(memberId, 10));
+        const name = member ? member.full_name : 'this member';
         if (!confirm(`Are you sure you want to delete member profile for "${name}"?`)) {
             return;
         }
@@ -1104,7 +1172,14 @@ const App = {
 
     async handleIssueBook(e) {
         e.preventDefault();
+<<<<<<< HEAD
         const bookId = document.getElementById('issue-book-id').value;
+=======
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
+
+        const bookId = document.getElementById('issue-book-select').value;
+>>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
         const memberId = document.getElementById('issue-member-select').value;
         const loanDays = document.getElementById('issue-days-select').value;
         const remarks = document.getElementById('issue-remarks-input').value.trim();
@@ -1112,6 +1187,11 @@ const App = {
         if (!bookId || !memberId) {
             this.showToast('Please select both a book and a member.', 'error');
             return;
+        }
+
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span>Issuing...</span>';
         }
 
         try {
@@ -1152,6 +1232,11 @@ const App = {
 
         } catch (err) {
             this.showToast(err.message, 'error');
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
         }
     },
 
@@ -1268,6 +1353,13 @@ const App = {
 
     async handleConfirmReturn(e) {
         e.preventDefault();
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span>Processing...</span>';
+        }
+
         const loanId = document.getElementById('return-loan-id').value;
         const finePaid = document.getElementById('return-fine-paid-checkbox').checked ? 1 : 0;
         const remarks = document.getElementById('return-remarks').value.trim();
@@ -1289,6 +1381,11 @@ const App = {
             if (this.state.currentView === 'overdue') this.loadOverdueList();
         } catch (err) {
             this.showToast(err.message, 'error');
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
         }
     },
 
@@ -1504,12 +1601,20 @@ const App = {
     // ====================================================================
     async handleLogin(e) {
         e.preventDefault();
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
+
         const username = document.getElementById('login-username').value.trim();
         const password = document.getElementById('login-password').value;
 
         if (!username || !password) {
             this.showToast('Please enter both username and password.', 'error');
             return;
+        }
+
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span>Verifying...</span>';
         }
 
         try {
@@ -1525,15 +1630,35 @@ const App = {
             this.navigate(this.state.currentView);
         } catch (err) {
             this.showToast(err.message, 'error');
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalBtnText;
+            }
         }
     },
 
     async handleLogout() {
         try {
             const data = await ApiService.auth.logout();
+<<<<<<< HEAD
             this.closeModal('modal-auth');
             this.showLoginGate();
             this.showToast(data.message || 'Logged out successfully', 'info');
+=======
+            this.showToast(data.message || 'Logged out successfully. Redirecting to login...', 'info');
+            this.setCurrentUser({
+                staff_id: 0,
+                staff_code: 'GUEST',
+                full_name: 'Guest Librarian',
+                email: 'guest@library.edu',
+                role: 'Assistant'
+            });
+            this.closeModal('modal-auth');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 600);
+>>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
         } catch (err) {
             this.showToast(err.message, 'error');
         }

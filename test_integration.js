@@ -5,7 +5,10 @@
 
 const http = require('http');
 require('dotenv').config();
-const server = require('./server.js');
+const app = require('./server.js');
+if (app.startServers) {
+    app.startServers();
+}
 
 let sessionCookie = '';
 
@@ -15,7 +18,7 @@ function request(method, path, body = null, cookie = '') {
         const req = http.request({
             hostname: 'localhost',
             port: process.env.PORT || 3000,
-            path: encodeURI(path),
+            path: encodeURI(decodeURI(path)),
             method: method,
             headers: {
                 'Content-Type': 'application/json',
@@ -84,7 +87,11 @@ setTimeout(async () => {
         const booksList = await request('GET', '/api/books?search=Modern Operating', null, sessionCookie);
         console.log('3.2 Search created book count:', booksList.body.count);
         if (!booksList.body.count || booksList.body.count < 1) {
+<<<<<<< HEAD
             throw new Error('Book search did not find the newly created title!');
+=======
+            throw new Error('Search failed: Created book was not found in catalog search results');
+>>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
         }
 
         // Edit book
@@ -162,10 +169,45 @@ setTimeout(async () => {
         const logoutRes = await request('POST', '/api/auth/logout', null, sessionCookie);
         console.log('7.1 Logout status:', logoutRes.status, 'Message:', logoutRes.body.message);
 
-        console.log('\n>>> ALL 7 END-TO-END INTEGRATION TESTS PASSED 100%! <<<');
+        console.log('\n=== TEST 8: LOGIN & TERMS PAGES ROUTING & HOME ACCESS GUARD ===');
+        const loginPageRes = await request('GET', '/login');
+        console.log('8.1 GET /login status:', loginPageRes.status, 'Has Login HTML:', typeof loginPageRes.body === 'string' && loginPageRes.body.includes('Portal Login'));
+        if (loginPageRes.status !== 200 || !loginPageRes.body.includes('Portal Login')) {
+            throw new Error('/login did not return login.html');
+        }
+
+        const termsPageRes = await request('GET', '/terms');
+        console.log('8.2 GET /terms status:', termsPageRes.status, 'Has Terms HTML:', typeof termsPageRes.body === 'string' && termsPageRes.body.includes('Terms of Service & Library Policies'));
+        if (termsPageRes.status !== 200 || !termsPageRes.body.includes('Terms of Service & Library Policies')) {
+            throw new Error('/terms did not return terms.html');
+        }
+
+        // Test Unauthenticated Home Page Access (MUST REDIRECT to /login)
+        const unauthHomeRes = await request('GET', '/');
+        console.log('8.3 Unauthenticated GET / status:', unauthHomeRes.status, 'Location header:', unauthHomeRes.headers['location']);
+        if (unauthHomeRes.status !== 302 || unauthHomeRes.headers['location'] !== '/login') {
+            throw new Error('Unauthenticated GET / was not redirected to /login!');
+        }
+
+        const unauthIndexRes = await request('GET', '/index.html');
+        console.log('8.4 Unauthenticated GET /index.html status:', unauthIndexRes.status, 'Location header:', unauthIndexRes.headers['location']);
+        if (unauthIndexRes.status !== 302 || unauthIndexRes.headers['location'] !== '/login') {
+            throw new Error('Unauthenticated GET /index.html was not redirected to /login!');
+        }
+
+        const directLoginRes = await request('GET', '/login.html');
+        const directTermsRes = await request('GET', '/terms.html');
+        console.log('8.5 Static /login.html status:', directLoginRes.status, '| /terms.html status:', directTermsRes.status);
+        if (directLoginRes.status !== 200 || directTermsRes.status !== 200) {
+            throw new Error('Direct static page access failed');
+        }
+
+        console.log('\n>>> ALL 8 END-TO-END INTEGRATION TESTS PASSED 100%! <<<');
+        if (app.stopServers) app.stopServers();
         process.exit(0);
     } catch (e) {
         console.error('Integration test failed:', e);
+        if (app.stopServers) app.stopServers();
         process.exit(1);
     }
 }, 1000);

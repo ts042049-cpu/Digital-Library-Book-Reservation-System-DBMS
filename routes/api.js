@@ -189,6 +189,7 @@ router.get('/auth/me', async (req, res) => {
             user: req.session.user
         });
     }
+<<<<<<< HEAD
 
     try {
         const defaultStaff = await collection('staffs').findOne(
@@ -210,6 +211,13 @@ router.get('/auth/me', async (req, res) => {
     } catch (err) {
         res.status(500).json({ success: false, message: 'Failed to load staff session.' });
     }
+=======
+    res.json({
+        success: true,
+        authenticated: false,
+        user: null
+    });
+>>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
 });
 
 // POST /api/auth/logout
@@ -505,7 +513,8 @@ router.post('/books', async (req, res) => {
             return res.status(409).json({ success: false, message: `Book with ISBN "${isbn}" already exists in the catalog.` });
         }
 
-        const year = publication_year ? parseInt(publication_year, 10) : null;
+        const parsedYear = publication_year ? parseInt(publication_year, 10) : null;
+        const year = isNaN(parsedYear) ? null : parsedYear;
         const shelf = shelf_location ? shelf_location.trim() : 'Section A';
         const book_id = await nextSequence('book');
 
@@ -573,6 +582,7 @@ router.put('/books/:id', async (req, res) => {
 
         const copyDifference = newTotalCopies - currentBook.total_copies;
 
+<<<<<<< HEAD
         await collection('books').updateOne(
             { book_id: bookId },
             {
@@ -588,6 +598,26 @@ router.put('/books/:id', async (req, res) => {
                     shelf_location: shelf_location ? shelf_location.trim() : currentBook.shelf_location
                 }
             }
+=======
+        const stmt = db.prepare(`
+            UPDATE books
+            SET isbn = ?, title = ?, author = ?, publisher = ?, publication_year = ?,
+                genre = ?, total_copies = ?, available_copies = ?, shelf_location = ?
+            WHERE book_id = ?
+        `);
+
+        stmt.run(
+            isbn ? isbn.trim() : currentBook.isbn,
+            title ? title.trim() : currentBook.title,
+            author ? author.trim() : currentBook.author,
+            publisher !== undefined ? publisher : currentBook.publisher,
+            publication_year !== undefined ? (!isNaN(parseInt(publication_year, 10)) ? parseInt(publication_year, 10) : null) : currentBook.publication_year,
+            genre ? genre.trim() : currentBook.genre,
+            newTotalCopies,
+            newAvailableCopies,
+            shelf_location ? shelf_location.trim() : currentBook.shelf_location,
+            bookId
+>>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
         );
 
         const staffName = req.session && req.session.user ? req.session.user.full_name : (req.body.staff_name || 'Admin');
@@ -754,8 +784,22 @@ router.post('/members', async (req, res) => {
         }
 
         const currentYear = new Date().getFullYear();
+<<<<<<< HEAD
         const member_id = await nextSequence('member');
         const memberCode = `MEM-${currentYear}-${String(member_id).padStart(3, '0')}`;
+=======
+        let seq = 1;
+        const lastMember = db.prepare('SELECT member_id FROM members ORDER BY member_id DESC LIMIT 1').get();
+        if (lastMember) {
+            seq = lastMember.member_id + 1;
+        }
+        let memberCode = `MEM-${currentYear}-${String(seq).padStart(3, '0')}`;
+        while (db.prepare('SELECT member_id FROM members WHERE member_code = ?').get(memberCode)) {
+            seq++;
+            memberCode = `MEM-${currentYear}-${String(seq).padStart(3, '0')}`;
+        }
+
+>>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
         const limit = max_borrow_limit ? parseInt(max_borrow_limit, 10) : (membership_type === 'Faculty' ? 8 : 4);
 
         await collection('members').insertOne({
@@ -807,6 +851,7 @@ router.put('/members/:id', async (req, res) => {
             }
         }
 
+<<<<<<< HEAD
         await collection('members').updateOne(
             { member_id: memberId },
             {
@@ -820,6 +865,23 @@ router.put('/members/:id', async (req, res) => {
                     max_borrow_limit: max_borrow_limit ? parseInt(max_borrow_limit, 10) : currentMember.max_borrow_limit
                 }
             }
+=======
+        const stmt = db.prepare(`
+            UPDATE members
+            SET full_name = ?, email = ?, phone = ?, address = ?, membership_type = ?, status = ?, max_borrow_limit = ?
+            WHERE member_id = ?
+        `);
+
+        stmt.run(
+            full_name ? full_name.trim() : currentMember.full_name,
+            email ? email.trim().toLowerCase() : currentMember.email,
+            phone ? phone.trim() : currentMember.phone,
+            address !== undefined ? address.trim() : currentMember.address,
+            membership_type || currentMember.membership_type,
+            status || currentMember.status,
+            max_borrow_limit ? (!isNaN(parseInt(max_borrow_limit, 10)) ? parseInt(max_borrow_limit, 10) : currentMember.max_borrow_limit) : currentMember.max_borrow_limit,
+            memberId
+>>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
         );
 
         const staffName = req.session && req.session.user ? req.session.user.full_name : (req.body.staff_name || 'Admin');
@@ -977,11 +1039,23 @@ router.post('/loans/issue', async (req, res) => {
         const today = startOfDayUTC(new Date());
         const issueDate = toDateOnly(today);
         let finalDueDate;
+<<<<<<< HEAD
         if (due_date && /^\d{4}-\d{2}-\d{2}$/.test(due_date)) {
             finalDueDate = due_date;
         } else {
             const days = parseInt(loan_days, 10) || 14;
             finalDueDate = toDateOnly(addDays(today, days));
+=======
+        if (due_date && due_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            if (due_date < issueDate) {
+                return res.status(400).json({ success: false, message: 'Due date cannot be earlier than today.' });
+            }
+            finalDueDate = due_date;
+        } else {
+            const days = Math.max(1, parseInt(loan_days, 10) || 14);
+            const dueDateObj = new Date(today.getTime() + days * 24 * 60 * 60 * 1000);
+            finalDueDate = dueDateObj.toISOString().split('T')[0];
+>>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
         }
 
         const requestedStaffId = req.session && req.session.user ? req.session.user.staff_id : req.body.staff_id;
@@ -1129,10 +1203,16 @@ router.post('/loans/:id/renew', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Cannot renew a book that has already been returned.' });
         }
 
+<<<<<<< HEAD
         const [book, member] = await Promise.all([
             collection('books').findOne({ book_id: loan.book_id }),
             collection('members').findOne({ member_id: loan.member_id })
         ]);
+=======
+        const baseDate = new Date(loan.due_date) > new Date() ? new Date(loan.due_date) : new Date();
+        const days = Math.max(1, parseInt(additional_days, 10) || 14);
+        const newDue = new Date(baseDate.getTime() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+>>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
 
         const now = startOfDayUTC(new Date());
         const dueDate = toDate(loan.due_date);

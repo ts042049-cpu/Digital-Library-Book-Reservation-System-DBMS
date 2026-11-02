@@ -20,6 +20,7 @@ const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017';
 const MONGO_DB_NAME = process.env.MONGO_DB || 'krmu_library';
 const SEEDS_DIR = path.join(__dirname, 'seeds');
 
+<<<<<<< HEAD
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 let client = null;
@@ -180,6 +181,15 @@ async function seedAll() {
     await reconcileBookStock();
 
     console.log(`[Database] Seeded ${books.length.toLocaleString()} book titles, ${staffs.length} staff, ${members.length} members, ${loans.length} loans.`);
+=======
+try {
+    sqliteDb = new DatabaseSync(DB_PATH);
+    sqliteDb.exec('PRAGMA foreign_keys = ON;');
+    sqliteDb.exec('PRAGMA journal_mode = WAL;');
+    sqliteDb.exec('PRAGMA busy_timeout = 5000;');
+} catch (e) {
+    console.error('[Database Engine] Failed to initialize SQLite:', e.message);
+>>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
 }
 
 /**
@@ -332,11 +342,28 @@ async function refreshOverdueLoans() {
  * Restore the pristine demo state: demo staff/members/loans plus the full
  * 14,095-title accession catalog. Used by POST /api/system/reset-demo-data.
  */
+<<<<<<< HEAD
 async function resetDemoData() {
     const db = getDb();
     const collections = ['books', 'members', 'staffs', 'loans', 'reservations', 'auditlogs', 'counters'];
     for (const name of collections) {
         await db.collection(name).deleteMany({});
+=======
+function runTransaction(callback) {
+    if (!sqliteDb) throw new Error('Database not initialized');
+    sqliteDb.exec('BEGIN TRANSACTION;');
+    try {
+        const result = callback(sqliteDb);
+        sqliteDb.exec('COMMIT;');
+        return result;
+    } catch (error) {
+        try {
+            sqliteDb.exec('ROLLBACK;');
+        } catch (rollbackErr) {
+            console.error('[Database Engine] Rollback warning:', rollbackErr.message);
+        }
+        throw error;
+>>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
     }
     await seedAll();
     await refreshOverdueLoans();
