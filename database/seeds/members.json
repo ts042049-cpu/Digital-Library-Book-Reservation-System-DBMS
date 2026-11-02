@@ -1,0 +1,93 @@
+[
+  {
+    "member_id": 1,
+    "member_code": "MEM-2026-001",
+    "full_name": "Tushar Saini",
+    "email": "tushar.saini@student.edu",
+    "phone": "+91 98711 22334",
+    "address": "Hostel Block B, Room 204, Campus",
+    "membership_type": "Student",
+    "membership_date": "2026-08-01T00:00:00.000Z",
+    "status": "Active",
+    "max_borrow_limit": 4,
+    "created_at": "2026-10-27T08:58:24.000Z"
+  },
+  {
+    "member_id": 2,
+    "member_code": "MEM-2026-002",
+    "full_name": "Aarav Patel",
+    "email": "aarav.patel@student.edu",
+    "phone": "+91 98722 33445",
+    "address": "14 Green Park Avenue, New Delhi",
+    "membership_type": "Student",
+    "membership_date": "2026-08-05T00:00:00.000Z",
+    "status": "Active",
+    "max_borrow_limit": 4,
+    "created_at": "2026-10-27T08:58:24.000Z"
+  },
+  {
+    "member_id": 3,
+    "member_code": "MEM-2026-003",
+    "full_name": "Ananya Sharma",
+    "email": "ananya.s@student.edu",
+    "phone": "+91 98733 44556",
+    "address": "Hostel Block A, Room 112, Campus",
+    "membership_type": "Student",
+    "membership_date": "2026-08-10T00:00:00.000Z",
+    "status": "Active",
+    "max_borrow_limit": 4,
+    "created_at": "2026-10-27T08:58:24.000Z"
+  },
+  {
+    "member_id": 4,
+    "member_code": "MEM-2026-004",
+    "full_name": "Dr. Sunita Rao",
+    "email": "sunita.rao@faculty.edu",
+    "phone": "+91 98744 55667",
+    "address": "Staff Quarters Q-7, University Campus",
+    "membership_type": "Faculty",
+    "membership_date": "2025-07-15T00:00:00.000Z",
+    "status": "Active",
+    "max_borrow_limit": 8,
+    "created_at": "2026-10-27T08:58:24.000Z"
+  },
+  {
+    "member_id": 5,
+    "member_code": "MEM-2026-005",
+    "full_name": "Rohan Mehta",
+    "email": "rohan.m@student.edu",
+    "phone": "+91 98755 66778",
+    "address": "Plot 42, Sector 15, Rohini",
+    "membership_type": "Student",
+    "membership_date": "2026-08-12T00:00:00.000Z",
+    "status": "Active",
+    "max_borrow_limit": 4,
+    "created_at": "2026-10-27T08:58:24.000Z"
+  },
+  {
+    "member_id": 6,
+    "member_code": "MEM-2026-006",
+    "full_name": "Priya Kapoor",
+    "email": "priya.k@student.edu",
+    "phone": "+91 98766 77889",
+    "address": "Hostel Block C, Room 305, Campus",
+    "membership_type": "Student",
+    "membership_date": "2026-08-15T00:00:00.000Z",
+    "status": "Suspended",
+    "max_borrow_limit": 0,
+    "created_at": "2026-10-27T08:58:24.000Z"
+  },
+  {
+    "member_id": 7,
+    "member_code": "MEM-2026-007",
+    "full_name": "Vikramaditya Singh",
+    "email": "vikram.singh@research.edu",
+    "phone": "+91 98777 88990",
+    "address": "Research Scholar Hostel Room 402",
+    "membership_type": "Researcher",
+    "membership_date": "2026-01-10T00:00:00.000Z",
+    "status": "Active",
+    "max_borrow_limit": 6,
+    "created_at": "2026-10-27T08:58:24.000Z"
+  }
+]

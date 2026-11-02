@@ -1,8 +1,3 @@
-/**
- * CampusLib LMS — Main Express Application Server
- * Full-Stack Node.js, Express, Session Authentication & Relational Database
- */
-
 require('dotenv').config();
 const express = require('express');
 const path = require('node:path');
@@ -10,6 +5,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
 const apiRoutes = require('./routes/api');
+const { connect, close, MONGO_DB_NAME } = require('./database/db');
 
 const app = express();
 const PRIMARY_PORT = parseInt(process.env.PORT, 10) || 5000;
@@ -76,38 +72,55 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Start Primary Server (Port 5000)
-const primaryServer = app.listen(PRIMARY_PORT, () => {
-    console.log('================================================================');
-    console.log(`   CAMPUSLIB - ACADEMIC LIBRARY MANAGEMENT SYSTEM`);
-    console.log(`   Primary Server Running At:   http://localhost:${PRIMARY_PORT}`);
-    if (PRIMARY_PORT !== SECONDARY_PORT) {
-        console.log(`   Secondary Server Running At: http://localhost:${SECONDARY_PORT}`);
-    }
-    console.log(`   Active Database Engine:      SQLite (with MySQL 8.0 support)`);
-    console.log(`   Session Authentication:      Enabled (credentials: include)`);
-    console.log('================================================================');
-});
-
-primaryServer.on('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
-        console.warn(`[Notice] Port ${PRIMARY_PORT} is in use, check secondary port.`);
-    } else {
-        console.error('[Primary Server Error]:', err);
-    }
-});
-if (PRIMARY_PORT !== SECONDARY_PORT) {
+// Start the HTTP listeners only after MongoDB is reachable & seeded.
+async function start() {
     try {
-        const secondaryServer = app.listen(SECONDARY_PORT, () => {
-            console.log(`[DualPort] Secondary server active on http://localhost:${SECONDARY_PORT}`);
-        });
-        secondaryServer.on('error', (err) => {
-            if (err.code !== 'EADDRINUSE') {
-                console.warn(`[Secondary Port ${SECONDARY_PORT}]:`, err.message);
-            }
-        });
-    } catch (e) {}
+        await connect();
+    } catch (err) {
+        console.error('================================================================');
+        console.error('   STARTUP ABORTED: MongoDB is not reachable.');
+        console.error(`   URI: ${process.env.MONGO_URI || 'mongodb://127.0.0.1:27017'}`);
+        console.error('   Start the "MongoDB" Windows service (or run mongod) and retry.');
+        console.error('================================================================');
+        process.exit(1);
+    }
+
+    // Start Primary Server (Port 5000)
+    const primaryServer = app.listen(PRIMARY_PORT, () => {
+        console.log('================================================================');
+        console.log(`   KRMU LIBRARY - K.R. MANGALAM UNIVERSITY`);
+        console.log(`   Primary Server Running At:   http://localhost:${PRIMARY_PORT}`);
+        if (PRIMARY_PORT !== SECONDARY_PORT) {
+            console.log(`   Secondary Server Running At: http://localhost:${SECONDARY_PORT}`);
+        }
+        console.log(`   Active Database Engine:      MongoDB (database: ${MONGO_DB_NAME})`);
+        console.log(`   Session Authentication:      Enabled (credentials: include)`);
+        console.log('================================================================');
+    });
+
+    primaryServer.on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+            console.warn(`[Notice] Port ${PRIMARY_PORT} is in use, check secondary port.`);
+        } else {
+            console.error('[Primary Server Error]:', err);
+        }
+    });
+
+    if (PRIMARY_PORT !== SECONDARY_PORT) {
+        try {
+            const secondaryServer = app.listen(SECONDARY_PORT, () => {
+                console.log(`[DualPort] Secondary server active on http://localhost:${SECONDARY_PORT}`);
+            });
+            secondaryServer.on('error', (err) => {
+                if (err.code !== 'EADDRINUSE') {
+                    console.warn(`[Secondary Port ${SECONDARY_PORT}]:`, err.message);
+                }
+            });
+        } catch (e) {}
+    }
 }
+
+start();
 
 // Error & signal handlers to keep server robust
 process.on('uncaughtException', (err) => {
@@ -118,11 +131,11 @@ process.on('unhandledRejection', (reason, promise) => {
     console.error('[Unhandled Rejection]:', reason);
 });
 
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
     console.log('[Server] Received SIGINT (ignored to keep daemon alive)');
 });
 
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
     console.log('[Server] Received SIGTERM (ignored to keep daemon alive)');
 });
 
@@ -136,3 +149,4 @@ if (process.stdin.isTTY) {
 }
 
 module.exports = app;
+module.exports.closeDatabase = close;

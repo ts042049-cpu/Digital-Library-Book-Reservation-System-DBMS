@@ -1,10 +1,3 @@
-/**
- * ====================================================================
- * CampusLib LMS — Full-Stack Frontend Application
- * Fully integrated with Node.js + Express backend via ApiService
- * ====================================================================
- */
-
 const App = {
     state: {
         currentView: 'dashboard',
@@ -16,6 +9,9 @@ const App = {
             role: 'Admin'
         },
         books: [],
+        booksPage: 1,
+        booksLimit: 25,
+        booksPagination: { total: 0, totalPages: 1, limit: 25, page: 1 },
         members: [],
         loans: [],
         overdueCount: 0,
@@ -31,13 +27,14 @@ const App = {
         this.updateDateDisplay();
 
         // 1. Check current authenticated session via GET /api/auth/me
-        await this.checkCurrentSession();
+        const isAuthenticated = await this.checkCurrentSession();
 
-        // 2. Load initial dashboard data
-        this.navigate('dashboard');
-
-        // 3. Load staff accounts for role switcher / profile demo
-        this.loadStaffList();
+        // 2. Show the login gate until a staff session is confirmed
+        if (isAuthenticated) {
+            this.showApp();
+        } else {
+            this.showLoginGate();
+        }
     },
 
     /**
@@ -46,12 +43,123 @@ const App = {
     async checkCurrentSession() {
         try {
             const data = await ApiService.auth.me();
-            if (data && data.user) {
+            if (data && data.authenticated && data.user) {
                 this.setCurrentUser(data.user);
+                return true;
             }
         } catch (err) {
             console.warn('[Session] Session check fallback:', err.message);
         }
+        return false;
+    },
+
+    /**
+     * Reveal the main application shell for an authenticated staff member
+     */
+    showApp() {
+        const gate = document.getElementById('login-gate');
+        if (gate) gate.style.display = 'none';
+
+        const appContainer = document.getElementById('app-container');
+        if (appContainer) appContainer.hidden = false;
+
+        document.body.classList.remove('is-locked');
+        this.loadStaffList();
+        this.navigate(this.state.currentView || 'dashboard');
+    },
+
+    /**
+     * Show the full-screen login gate and hide the application shell
+     */
+    showLoginGate() {
+        const appContainer = document.getElementById('app-container');
+        if (appContainer) appContainer.hidden = true;
+
+        const gate = document.getElementById('login-gate');
+        if (gate) gate.style.display = 'flex';
+
+        document.body.classList.add('is-locked');
+        this.setGateError('');
+
+        const username = document.getElementById('gate-username');
+        if (username) {
+            setTimeout(() => username.focus(), 60);
+        }
+    },
+
+    setGateError(message) {
+        const box = document.getElementById('gate-login-error');
+        if (!box) return;
+        if (message) {
+            box.textContent = message;
+            box.hidden = false;
+        } else {
+            box.textContent = '';
+            box.hidden = true;
+        }
+    },
+
+    /**
+     * Handle sign-in from the full-screen login gate
+     */
+    async handleGateLogin(e) {
+        e.preventDefault();
+
+        const usernameInput = document.getElementById('gate-username');
+        const passwordInput = document.getElementById('gate-password');
+        const submitBtn = document.getElementById('gate-login-submit');
+        const submitLabel = submitBtn ? submitBtn.querySelector('.login-submit-label') : null;
+
+        const username = usernameInput ? usernameInput.value.trim() : '';
+        const password = passwordInput ? passwordInput.value : '';
+
+        this.setGateError('');
+
+        if (!username || !password) {
+            this.setGateError('Please enter both your staff email/staff code and password.');
+            if (!username && usernameInput) usernameInput.focus();
+            else if (passwordInput) passwordInput.focus();
+            return;
+        }
+
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.classList.add('is-loading');
+            if (submitLabel) submitLabel.textContent = 'Signing in…';
+        }
+
+        try {
+            const data = await ApiService.auth.login(username, password);
+            if (!data.success) throw new Error(data.message);
+
+            this.setCurrentUser(data.user);
+            this.resetForm('form-gate-login');
+            this.showApp();
+            this.showToast(data.message || 'Signed in successfully.', 'success');
+        } catch (err) {
+            this.setGateError(err.message || 'Sign in failed. Please try again.');
+            if (passwordInput) {
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('is-loading');
+                if (submitLabel) submitLabel.textContent = 'Sign In';
+            }
+        }
+    },
+
+    toggleGatePassword() {
+        const input = document.getElementById('gate-password');
+        const toggle = document.getElementById('gate-toggle-password');
+        if (!input || !toggle) return;
+
+        const show = input.type === 'password';
+        input.type = show ? 'text' : 'password';
+        toggle.setAttribute('aria-pressed', String(show));
+        toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
     },
 
     setCurrentUser(user) {
@@ -127,7 +235,7 @@ const App = {
                         const booksSearch = document.getElementById('books-search-input');
                         if (booksSearch) {
                             booksSearch.value = query;
-                            this.loadBooks();
+                            this.loadBooks({ resetPage: true });
                         }
                     }
                 }
@@ -166,7 +274,7 @@ const App = {
                 this.loadDashboard();
                 break;
             case 'books':
-                this.loadBooks();
+                this.loadBooks({ resetPage: true });
                 break;
             case 'members':
                 this.loadMembers();
@@ -198,13 +306,33 @@ const App = {
     setupEventListeners() {
         // Books view filters
         const booksSearch = document.getElementById('books-search-input');
-        if (booksSearch) booksSearch.addEventListener('input', this.debounce(() => this.loadBooks(), 300));
+        if (booksSearch) booksSearch.addEventListener('input', this.debounce(() => this.loadBooks({ resetPage: true }), 300));
         const genreFilter = document.getElementById('books-genre-filter');
-        if (genreFilter) genreFilter.addEventListener('change', () => this.loadBooks());
+        if (genreFilter) genreFilter.addEventListener('change', () => this.loadBooks({ resetPage: true }));
         const availFilter = document.getElementById('books-avail-filter');
-        if (availFilter) availFilter.addEventListener('change', () => this.loadBooks());
+        if (availFilter) availFilter.addEventListener('change', () => this.loadBooks({ resetPage: true }));
         const sortFilter = document.getElementById('books-sort-filter');
-        if (sortFilter) sortFilter.addEventListener('change', () => this.loadBooks());
+        if (sortFilter) sortFilter.addEventListener('change', () => this.loadBooks({ resetPage: true }));
+
+        // Books table pagination
+        const booksPrevBtn = document.getElementById('books-prev-btn');
+        if (booksPrevBtn) {
+            booksPrevBtn.addEventListener('click', () => {
+                if (this.state.booksPage > 1) {
+                    this.state.booksPage--;
+                    this.loadBooks();
+                }
+            });
+        }
+        const booksNextBtn = document.getElementById('books-next-btn');
+        if (booksNextBtn) {
+            booksNextBtn.addEventListener('click', () => {
+                if (this.state.booksPage < (this.state.booksPagination?.totalPages || 1)) {
+                    this.state.booksPage++;
+                    this.loadBooks();
+                }
+            });
+        }
 
         // Add Book Modal trigger
         const btnAddBook = document.getElementById('btn-add-book');
@@ -272,6 +400,24 @@ const App = {
         if (transSearch) transSearch.addEventListener('input', this.debounce(() => this.loadTransactions(), 300));
         const transStatus = document.getElementById('transactions-status-filter');
         if (transStatus) transStatus.addEventListener('change', () => this.loadTransactions());
+
+        // Full-screen login gate
+        const gateForm = document.getElementById('form-gate-login');
+        if (gateForm) {
+            gateForm.addEventListener('submit', (e) => this.handleGateLogin(e));
+        }
+        const gatePasswordToggle = document.getElementById('gate-toggle-password');
+        if (gatePasswordToggle) {
+            gatePasswordToggle.addEventListener('click', () => this.toggleGatePassword());
+        }
+
+        // Any API call that reports 401 sends the user back to the login gate
+        document.addEventListener('auth:required', () => {
+            if (!document.getElementById('app-container')?.hidden) {
+                this.showLoginGate();
+                this.showToast('Your session has ended. Please sign in again.', 'info');
+            }
+        });
 
         // Staff Login Form Submission
         const formLogin = document.getElementById('form-staff-login');
@@ -435,7 +581,7 @@ const App = {
     // ====================================================================
     // 2. BOOK CATALOG CONTROLLER (GET /api/books)
     // ====================================================================
-    async loadBooks() {
+    async loadBooks({ resetPage = false } = {}) {
         try {
             const search = document.getElementById('books-search-input')?.value || '';
             const genre = document.getElementById('books-genre-filter')?.value || 'All';
@@ -443,10 +589,22 @@ const App = {
             const sortVal = document.getElementById('books-sort-filter')?.value || 'title:ASC';
             const [sortBy, sortOrder] = sortVal.split(':');
 
-            const data = await ApiService.books.getAll({ search, genre, availability, sortBy, sortOrder });
+            if (resetPage) this.state.booksPage = 1;
+
+            const page = this.state.booksPage || 1;
+            const limit = this.state.booksLimit || 25;
+
+            const data = await ApiService.books.getAll({ search, genre, availability, sortBy, sortOrder, page, limit });
             if (!data.success) throw new Error(data.message);
 
             this.state.books = data.books || [];
+            this.state.booksPage = data.page || 1;
+            this.state.booksPagination = {
+                total: data.count || 0,
+                totalPages: data.totalPages || 1,
+                limit: data.limit || limit,
+                page: data.page || 1
+            };
 
             // Populate genres in dropdown
             const genreSelect = document.getElementById('books-genre-filter');
@@ -469,17 +627,18 @@ const App = {
 
                         return `
                             <tr>
-                                <td><code style="font-size:0.8rem; background:var(--bg-subtle); padding:2px 5px; border-radius:4px;">${this.escapeHtml(b.isbn)}</code></td>
                                 <td>
-                                    <strong>${this.escapeHtml(b.title)}</strong>
-                                    <div style="font-size:0.78rem; color:var(--text-muted);">${this.escapeHtml(b.author)}</div>
+                                    <div class="cell-primary cell-clamp-2" title="${this.escapeHtml(b.title)}">${this.escapeHtml(b.title)}</div>
+                                    <div class="cell-sub" title="${this.escapeHtml(b.author)}">${this.escapeHtml(b.author)}</div>
+                                    <code class="cell-code" title="${this.escapeHtml(b.isbn)}">${this.escapeHtml(b.isbn)}</code>
                                 </td>
-                                <td><span class="badge badge-neutral">${this.escapeHtml(b.genre)}</span></td>
-                                <td>${this.escapeHtml(b.publisher || 'N/A')} (${b.publication_year || '—'})</td>
-                                <td><span style="font-size:0.8rem; font-weight:500;">${this.escapeHtml(b.shelf_location || 'General')}</span></td>
+                                <td><span class="badge badge-neutral badge-fit">${this.escapeHtml(b.genre)}</span></td>
                                 <td>
-                                    <strong>${b.available_copies}</strong> / ${b.total_copies}
+                                    <div class="cell-truncate" title="${this.escapeHtml(b.publisher || 'N/A')}">${this.escapeHtml(b.publisher || 'N/A')}</div>
+                                    <div class="cell-sub">${b.publication_year || '—'}</div>
                                 </td>
+                                <td><span class="cell-truncate cell-strong" title="${this.escapeHtml(b.shelf_location || 'General')}">${this.escapeHtml(b.shelf_location || 'General')}</span></td>
+                                <td class="cell-nowrap"><strong>${b.available_copies}</strong> <span class="cell-muted">/ ${b.total_copies}</span></td>
                                 <td>
                                     <span class="badge ${badgeClass}">
                                         <span class="badge-dot"></span>
@@ -487,7 +646,7 @@ const App = {
                                     </span>
                                 </td>
                                 <td>
-                                    <div style="display:flex; gap:0.4rem;">
+                                    <div class="table-actions">
                                         <button class="btn btn-sm btn-outline" onclick="App.openEditBookModal(${b.book_id})">Edit</button>
                                         <button class="btn btn-sm btn-outline" style="color:var(--danger-600);" onclick="App.deleteBook(${b.book_id}, '${this.escapeJs(b.title)}')">Delete</button>
                                     </div>
@@ -496,13 +655,32 @@ const App = {
                         `;
                     }).join('');
                 } else {
-                    tbody.innerHTML = `<tr><td colspan="8" class="empty-state">No books found matching search criteria.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="7" class="empty-state">No books found matching search criteria.</td></tr>`;
                 }
             }
+
+            this.renderBooksPagination();
         } catch (err) {
             console.error('Failed to load books:', err);
             this.showToast('Error loading books catalog: ' + err.message, 'error');
         }
+    },
+
+    renderBooksPagination() {
+        const info = document.getElementById('books-page-info');
+        const label = document.getElementById('books-page-label');
+        const prev = document.getElementById('books-prev-btn');
+        const next = document.getElementById('books-next-btn');
+        if (!info || !label || !prev || !next) return;
+
+        const p = this.state.booksPagination || { total: 0, totalPages: 1, limit: 25, page: 1 };
+        const start = p.total === 0 ? 0 : (p.page - 1) * p.limit + 1;
+        const end = Math.min(p.page * p.limit, p.total);
+
+        info.textContent = `Showing ${start.toLocaleString('en-IN')}–${end.toLocaleString('en-IN')} of ${p.total.toLocaleString('en-IN')} titles`;
+        label.textContent = `Page ${p.page} of ${p.totalPages}`;
+        prev.disabled = p.page <= 1;
+        next.disabled = p.page >= p.totalPages;
     },
 
     openEditBookModal(bookId) {
@@ -591,20 +769,19 @@ const App = {
 
                         return `
                             <tr>
-                                <td><strong style="color:var(--primary-700);">${this.escapeHtml(m.member_code)}</strong></td>
                                 <td>
-                                    <strong>${this.escapeHtml(m.full_name)}</strong>
-                                    <div style="font-size:0.78rem; color:var(--text-muted);">${this.escapeHtml(m.address || 'Campus Resident')}</div>
+                                    <div class="cell-primary cell-truncate" title="${this.escapeHtml(m.full_name)}">${this.escapeHtml(m.full_name)}</div>
+                                    <div class="cell-sub" title="${this.escapeHtml(m.member_code)} — ${this.escapeHtml(m.address || 'Campus Resident')}"><span class="cell-code-inline">${this.escapeHtml(m.member_code)}</span> · ${this.escapeHtml(m.address || 'Campus Resident')}</div>
                                 </td>
                                 <td>
-                                    <div>${this.escapeHtml(m.email)}</div>
-                                    <div style="font-size:0.75rem; color:var(--text-muted);">${this.escapeHtml(m.phone)}</div>
+                                    <div class="cell-truncate" title="${this.escapeHtml(m.email)}">${this.escapeHtml(m.email)}</div>
+                                    <div class="cell-sub" title="${this.escapeHtml(m.phone)}">${this.escapeHtml(m.phone)}</div>
                                 </td>
-                                <td><span class="badge badge-neutral">${this.escapeHtml(m.membership_type)}</span></td>
-                                <td>${m.membership_date}</td>
-                                <td>
-                                    <strong>${m.currently_borrowed}</strong> / ${m.max_borrow_limit}
-                                    ${m.pending_fines > 0 ? `<div style="font-size:0.75rem; color:var(--danger-600); font-weight:600;">Fine: ₹${m.pending_fines}</div>` : ''}
+                                <td><span class="badge badge-neutral badge-fit">${this.escapeHtml(m.membership_type)}</span></td>
+                                <td class="cell-nowrap">${m.membership_date}</td>
+                                <td class="cell-nowrap">
+                                    <strong>${m.currently_borrowed}</strong> <span class="cell-muted">/ ${m.max_borrow_limit}</span>
+                                    ${m.pending_fines > 0 ? `<div class="cell-sub" style="color:var(--danger-600); font-weight:600;">Fine: ₹${m.pending_fines}</div>` : ''}
                                 </td>
                                 <td>
                                     <span class="badge ${statusClass}">
@@ -613,7 +790,7 @@ const App = {
                                     </span>
                                 </td>
                                 <td>
-                                    <div style="display:flex; gap:0.4rem;">
+                                    <div class="table-actions">
                                         <button class="btn btn-sm btn-outline" onclick="App.openEditMemberModal(${m.member_id})">Edit</button>
                                         <button class="btn btn-sm btn-outline" style="color:var(--danger-600);" onclick="App.deleteMember(${m.member_id}, '${this.escapeJs(m.full_name)}')">Delete</button>
                                     </div>
@@ -622,7 +799,7 @@ const App = {
                         `;
                     }).join('');
                 } else {
-                    tbody.innerHTML = `<tr><td colspan="8" class="empty-state">No members found.</td></tr>`;
+                    tbody.innerHTML = `<tr><td colspan="7" class="empty-state">No members found.</td></tr>`;
                 }
             }
         } catch (err) {
@@ -701,37 +878,17 @@ const App = {
             document.getElementById('issue-success-slip').style.display = 'none';
 
             const [booksData, membersData] = await Promise.all([
-                ApiService.books.getAll({ availability: 'all' }),
+                ApiService.books.getAll({ availability: 'all', sortBy: 'title', sortOrder: 'ASC', page: 1, limit: 300 }),
                 ApiService.members.getAll({ status: 'All' })
             ]);
 
             this.state.books = booksData.books || [];
+            this.state.bookMatchCount = booksData.count || this.state.books.length;
             this.state.members = membersData.members || [];
 
-            // Populate Books Select
-            const bookSelect = document.getElementById('issue-book-select');
-            if (bookSelect) {
-                bookSelect.innerHTML = `<option value="">-- Choose a title from catalog --</option>` + 
-                    this.state.books.map(b => {
-                        const avail = b.available_copies > 0 ? `(${b.available_copies} available)` : `(OUT OF STOCK)`;
-                        return `<option value="${b.book_id}" ${b.available_copies === 0 ? 'data-disabled="true"' : ''}>${this.escapeHtml(b.title)} ${avail} - [${b.shelf_location || 'General'}]</option>`;
-                    }).join('');
-
-                bookSelect.onchange = () => {
-                    const bookId = parseInt(bookSelect.value, 10);
-                    const book = this.state.books.find(b => b.book_id === bookId);
-                    const hint = document.getElementById('issue-book-stock-hint');
-                    if (book && hint) {
-                        if (book.available_copies > 0) {
-                            hint.innerHTML = `<span style="color:var(--accent-600); font-weight:600;">✓ In Stock:</span> ${book.available_copies} of ${book.total_copies} copies ready on <strong>${book.shelf_location || 'General'}</strong>.`;
-                        } else {
-                            hint.innerHTML = `<span style="color:var(--danger-600); font-weight:600;">⚠ Out of Stock:</span> All ${book.total_copies} copies currently issued. Cannot issue.`;
-                        }
-                    } else if (hint) {
-                        hint.textContent = '';
-                    }
-                };
-            }
+            // Reset the book picker
+            this.resetIssueBookPicker();
+            this.setupIssueBookPicker();
 
             // Populate Members Select
             const memberSelect = document.getElementById('issue-member-select');
@@ -766,9 +923,188 @@ const App = {
         }
     },
 
+    // ----------------------------------------------------------------
+    // Custom searchable book picker (replaces the native <select>)
+    // Native dropdowns cannot show long titles — options render wider
+    // than the window and the start of the title gets cut off.
+    // ----------------------------------------------------------------
+    setupIssueBookPicker() {
+        const picker = document.getElementById('issue-book-picker');
+        const trigger = document.getElementById('issue-book-trigger');
+        const bookSearch = document.getElementById('issue-book-search');
+
+        if (trigger) {
+            trigger.onclick = () => this.toggleIssueBookPanel();
+        }
+
+        // Close when clicking outside the picker (or its search box)
+        if (!this._issuePickerOutsideHandler) {
+            this._issuePickerOutsideHandler = (e) => {
+                const pickerEl = document.getElementById('issue-book-picker');
+                const inPicker = pickerEl && pickerEl.contains(e.target);
+                const inSearch = e.target && e.target.id === 'issue-book-search';
+                if (!inPicker && !inSearch) this.closeIssueBookPanel();
+            };
+            document.addEventListener('click', this._issuePickerOutsideHandler);
+        }
+
+        // Escape closes the panel
+        if (!this._issuePickerKeyHandler) {
+            this._issuePickerKeyHandler = (e) => {
+                if (e.key === 'Escape') this.closeIssueBookPanel();
+            };
+            document.addEventListener('keydown', this._issuePickerKeyHandler);
+        }
+
+        this.renderIssueBookOptions();
+
+        // Live search across the full accession catalog
+        if (bookSearch) {
+            bookSearch.value = '';
+            bookSearch.oninput = this.debounce(async () => {
+                const term = bookSearch.value.trim();
+                try {
+                    const results = await ApiService.books.getAll({
+                        search: term,
+                        availability: 'all',
+                        sortBy: 'title',
+                        sortOrder: 'ASC',
+                        page: 1,
+                        limit: 300
+                    });
+                    this.state.books = results.books || [];
+                    this.state.bookMatchCount = results.count || this.state.books.length;
+                    this.renderIssueBookOptions();
+                    this.openIssueBookPanel();
+                    document.getElementById('issue-book-stock-hint').textContent = '';
+                } catch (err) {
+                    this.showToast('Failed to search books: ' + err.message, 'error');
+                }
+            }, 300);
+
+            bookSearch.onfocus = () => this.openIssueBookPanel();
+        }
+    },
+
+    renderIssueBookOptions() {
+        const list = document.getElementById('issue-book-list');
+        const resultHint = document.getElementById('issue-book-result-hint');
+        if (!list) return;
+
+        if (!this.state.books.length) {
+            list.innerHTML = `<div class="book-picker-empty">No titles match your search.</div>`;
+            if (resultHint) resultHint.textContent = '';
+            return;
+        }
+
+        // "Showing N of M" hint so users know the list is capped at 300 rows.
+        if (resultHint) {
+            const shown = this.state.books.length;
+            const total = this.state.bookMatchCount || shown;
+            if (total > shown) {
+                resultHint.textContent = `Showing ${shown} of ${total.toLocaleString()} matching titles — type more to narrow the list.`;
+            } else {
+                resultHint.textContent = `Showing all ${shown.toLocaleString()} matching titles.`;
+            }
+        }
+
+        const selectedId = document.getElementById('issue-book-id')?.value || '';
+
+        list.innerHTML = this.state.books.map(b => {
+            const isAvailable = b.available_copies > 0;
+            const badgeClass = isAvailable ? 'badge-success' : 'badge-danger';
+            const badgeLabel = isAvailable ? `${b.available_copies} available` : 'Out of stock';
+
+            return `
+                <button type="button"
+                        class="book-picker-option${String(b.book_id) === selectedId ? ' is-selected' : ''}"
+                        role="option"
+                        aria-selected="${String(b.book_id) === selectedId}"
+                        onclick="App.selectIssueBook(${b.book_id})">
+                    <span class="book-picker-main">
+                        <span class="book-picker-title">${this.escapeHtml(b.title)}</span>
+                        <span class="book-picker-meta">${this.escapeHtml(b.author || 'Unknown Author')} · ${b.publication_year || '—'} · ${this.escapeHtml(b.isbn)}</span>
+                    </span>
+                    <span class="book-picker-side">
+                        <span class="badge ${badgeClass}"><span class="badge-dot"></span>${badgeLabel}</span>
+                        <span class="book-picker-shelf">${this.escapeHtml(b.shelf_location || 'General')}</span>
+                    </span>
+                </button>
+            `;
+        }).join('');
+    },
+
+    selectIssueBook(bookId) {
+        const book = this.state.books.find(b => b.book_id === bookId);
+        if (!book) return;
+
+        const hidden = document.getElementById('issue-book-id');
+        const trigger = document.getElementById('issue-book-trigger');
+        const triggerText = document.getElementById('issue-book-trigger-text');
+        if (hidden) hidden.value = String(bookId);
+
+        if (trigger && triggerText) {
+            triggerText.textContent = book.title;
+            trigger.classList.remove('is-placeholder');
+            trigger.title = book.title;
+        }
+
+        // Re-render so the selected row is highlighted
+        this.renderIssueBookOptions();
+        this.closeIssueBookPanel();
+
+        const hint = document.getElementById('issue-book-stock-hint');
+        if (hint) {
+            if (book.available_copies > 0) {
+                hint.innerHTML = `<span style="color:var(--accent-600); font-weight:600;">✓ In Stock:</span> ${book.available_copies} of ${book.total_copies} copies ready on <strong>${this.escapeHtml(book.shelf_location || 'General')}</strong>.`;
+            } else {
+                hint.innerHTML = `<span style="color:var(--danger-600); font-weight:600;">⚠ Out of Stock:</span> All ${book.total_copies} copies currently issued. Cannot issue.`;
+            }
+        }
+    },
+
+    resetIssueBookPicker() {
+        const hidden = document.getElementById('issue-book-id');
+        const trigger = document.getElementById('issue-book-trigger');
+        const triggerText = document.getElementById('issue-book-trigger-text');
+        if (hidden) hidden.value = '';
+        if (trigger && triggerText) {
+            triggerText.textContent = '-- Choose a title from catalog --';
+            trigger.classList.add('is-placeholder');
+            trigger.removeAttribute('title');
+        }
+        this.closeIssueBookPanel();
+    },
+
+    openIssueBookPanel() {
+        const picker = document.getElementById('issue-book-picker');
+        const trigger = document.getElementById('issue-book-trigger');
+        if (!picker) return;
+        picker.classList.add('open');
+        if (trigger) trigger.setAttribute('aria-expanded', 'true');
+    },
+
+    closeIssueBookPanel() {
+        const picker = document.getElementById('issue-book-picker');
+        const trigger = document.getElementById('issue-book-trigger');
+        if (!picker) return;
+        picker.classList.remove('open');
+        if (trigger) trigger.setAttribute('aria-expanded', 'false');
+    },
+
+    toggleIssueBookPanel() {
+        const picker = document.getElementById('issue-book-picker');
+        if (!picker) return;
+        if (picker.classList.contains('open')) {
+            this.closeIssueBookPanel();
+        } else {
+            this.openIssueBookPanel();
+        }
+    },
+
     async handleIssueBook(e) {
         e.preventDefault();
-        const bookId = document.getElementById('issue-book-select').value;
+        const bookId = document.getElementById('issue-book-id').value;
         const memberId = document.getElementById('issue-member-select').value;
         const loanDays = document.getElementById('issue-days-select').value;
         const remarks = document.getElementById('issue-remarks-input').value.trim();
@@ -791,6 +1127,9 @@ const App = {
             if (!data.success) throw new Error(data.message);
 
             this.showToast(data.message, 'success');
+
+            // Clear the selected title immediately so the form is ready for the next issue
+            this.resetIssueBookPicker();
 
             // Render printable issue slip
             const slip = document.getElementById('issue-success-slip');
@@ -1192,16 +1531,9 @@ const App = {
     async handleLogout() {
         try {
             const data = await ApiService.auth.logout();
-            this.showToast(data.message || 'Logged out successfully', 'info');
-            this.setCurrentUser({
-                staff_id: 0,
-                staff_code: 'GUEST',
-                full_name: 'Guest Librarian',
-                email: 'guest@library.edu',
-                role: 'Assistant'
-            });
             this.closeModal('modal-auth');
-            this.navigate('dashboard');
+            this.showLoginGate();
+            this.showToast(data.message || 'Logged out successfully', 'info');
         } catch (err) {
             this.showToast(err.message, 'error');
         }
@@ -1255,19 +1587,23 @@ const App = {
             case 'stock_check':
                 this.navigate('issue');
                 this.showToast('Demonstration: Trying to issue an Out-of-Stock book...', 'info');
-                setTimeout(() => {
-                    const select = document.getElementById('issue-book-select');
-                    if (select) {
-                        for (let i = 0; i < select.options.length; i++) {
-                            if (select.options[i].text.includes('OUT OF STOCK') || select.options[i].text.includes('0 available')) {
-                                select.selectedIndex = i;
-                                select.dispatchEvent(new Event('change'));
-                                this.showToast('Note how the system detects available_copies = 0 and blocks the transaction!', 'warning');
-                                break;
-                            }
+                setTimeout(async () => {
+                    try {
+                        let book = this.state.books.find(b => b.available_copies === 0);
+                        if (!book) {
+                            const res = await ApiService.books.getAll({ availability: 'unavailable', page: 1, limit: 1 });
+                            book = (res.books || [])[0];
+                            if (book) this.state.books = [book, ...this.state.books];
                         }
+                        if (book) {
+                            this.renderIssueBookOptions();
+                            this.selectIssueBook(book.book_id);
+                            this.showToast('Note how the system detects available_copies = 0 and blocks the transaction!', 'warning');
+                        }
+                    } catch (err) {
+                        console.warn('[Demo] Could not load an out-of-stock title:', err.message);
                     }
-                }, 500);
+                }, 800);
                 break;
 
             case 'fine_calc':
@@ -1379,7 +1715,11 @@ const App = {
 
     escapeJs(str) {
         if (!str) return '';
-        return String(str).replace(/'/g, "\\'");
+        return String(str)
+            .replace(/\\/g, '\\\\')
+            .replace(/'/g, "\\'")
+            .replace(/"/g, '&quot;')
+            .replace(/\r?\n/g, ' ');
     }
 };
 

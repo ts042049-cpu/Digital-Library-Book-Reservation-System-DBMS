@@ -1,0 +1,30 @@
+[
+  {
+    "log_id": 1,
+    "action_type": "SYSTEM_INIT",
+    "description": "Library database initialized with baseline catalog and student profiles.",
+    "staff_name": "System",
+    "timestamp": "2026-08-01T09:00:00.000Z"
+  },
+  {
+    "log_id": 2,
+    "action_type": "BOOK_ADD",
+    "description": "Added 14 book titles across Computer Science, Math and Literature.",
+    "staff_name": "Dr. Rajesh Sharma",
+    "timestamp": "2026-08-01T10:15:00.000Z"
+  },
+  {
+    "log_id": 3,
+    "action_type": "MEMBER_REGISTER",
+    "description": "Registered initial student batch MEM-2026-001 through MEM-2026-007.",
+    "staff_name": "Pooja Verma",
+    "timestamp": "2026-08-01T11:30:00.000Z"
+  },
+  {
+    "log_id": 4,
+    "action_type": "LOAN_ISSUE",
+    "description": "Issued \"Fundamentals of Database Systems\" to Tushar Saini (MEM-2026-001).",
+    "staff_name": "Pooja Verma",
+    "timestamp": "2026-10-15T14:22:10.000Z"
+  }
+]

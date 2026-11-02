@@ -1,0 +1,38 @@
+[
+  {
+    "staff_id": 1,
+    "staff_code": "STF-101",
+    "full_name": "Dr. Rajesh Sharma",
+    "email": "admin@library.edu",
+    "phone": "+91 98765 43210",
+    "role": "Admin",
+    "hire_date": "2023-01-15T00:00:00.000Z",
+    "password": "admin123",
+    "status": "Active",
+    "created_at": "2026-10-27T08:58:24.000Z"
+  },
+  {
+    "staff_id": 2,
+    "staff_code": "STF-102",
+    "full_name": "Pooja Verma",
+    "email": "pooja.verma@library.edu",
+    "phone": "+91 98123 45678",
+    "role": "Librarian",
+    "hire_date": "2024-03-01T00:00:00.000Z",
+    "password": "lib123",
+    "status": "Active",
+    "created_at": "2026-10-27T08:58:24.000Z"
+  },
+  {
+    "staff_id": 3,
+    "staff_code": "STF-103",
+    "full_name": "Amit Kumar",
+    "email": "amit.k@library.edu",
+    "phone": "+91 98234 56789",
+    "role": "Assistant",
+    "hire_date": "2024-08-10T00:00:00.000Z",
+    "password": "lib123",
+    "status": "Active",
+    "created_at": "2026-10-27T08:58:24.000Z"
+  }
+]

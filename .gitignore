@@ -3,6 +3,7 @@ node_modules/
 .DS_Store
 Thumbs.db
 .env
-database/library.db-journal
-database/library.db-wal
-database/library.db-shm
+
+# MongoDB data directories (if a local dbpath is ever created in-repo)
+data/
+mongodb-data/

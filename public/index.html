@@ -3,23 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Library Management System | Campus Academic LMS</title>
+    <title>KRMU Library | K.R. Mangalam University</title>
+    <link rel="icon" type="image/webp" href="assets/krmu-logo-mark.webp">
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div class="app-container">
+    <!-- ====================================================================
+         LOGIN GATE — shown until a staff session is authenticated
+         ==================================================================== -->
+    <div class="login-gate" id="login-gate">
+        <div class="login-gate-panel">
+            <div class="login-gate-intro">
+                <div class="login-gate-logo">
+                    <img src="assets/krmu-logo-mark.webp" alt="K.R. Mangalam University emblem">
+                </div>
+                <div class="login-gate-eyebrow">K.R. Mangalam University</div>
+                <h1>Central Library<br>Circulation Desk</h1>
+                <p class="login-gate-lede">
+                    Issue and return books, track overdue fines, and manage the campus
+                    collection from a single circulation workspace.
+                </p>
+                <ul class="login-gate-points">
+                    <li>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span>Live catalog and member records</span>
+                    </li>
+                    <li>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span>Automatic fine and due-date tracking</span>
+                    </li>
+                    <li>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                        <span>Role-based staff access</span>
+                    </li>
+                </ul>
+                <div class="login-gate-footnote">DBMS Capstone Project &middot; 2026</div>
+            </div>
+
+            <div class="login-gate-form-wrap">
+                <form id="form-gate-login" class="login-card" novalidate>
+                    <div class="login-card-head">
+                        <h2>Staff Sign In</h2>
+                        <p>Enter your library staff credentials to continue.</p>
+                    </div>
+
+                    <div class="login-field">
+                        <label class="login-label" for="gate-username">Email or Staff Code</label>
+                        <div class="login-input">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-13.5h.01" /></svg>
+                            <input type="text" id="gate-username" name="username" autocomplete="username" spellcheck="false" placeholder="admin@library.edu or STF-101" required>
+                        </div>
+                    </div>
+
+                    <div class="login-field">
+                        <label class="login-label" for="gate-password">Password</label>
+                        <div class="login-input">
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                            <input type="password" id="gate-password" name="password" autocomplete="current-password" placeholder="Enter your password" required>
+                            <button type="button" class="login-eye" id="gate-toggle-password" aria-label="Show password" aria-pressed="false">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="login-error" id="gate-login-error" role="alert" hidden></div>
+
+                    <button type="submit" class="btn btn-primary login-submit" id="gate-login-submit">
+                        <span class="login-submit-label">Sign In</span>
+                        <svg class="login-spinner" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3" aria-hidden="true"><path stroke-linecap="round" d="M12 3a9 9 0 109 9" /></svg>
+                    </button>
+                </form>
+
+                <div class="login-gate-legal">
+                    Authorised library staff only &middot; Session expires after 24 hours
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container" id="app-container" hidden>
         <!-- ====================================================================
              SIDEBAR NAVIGATION
              ==================================================================== -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div class="brand-icon">
-                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                    </svg>
+                <div class="brand-logo">
+                    <img src="assets/krmu-logo-mark.webp" alt="K.R. Mangalam University emblem">
                 </div>
                 <div class="brand-text">
-                    <h1>CampusLib LMS</h1>
+                    <h1>KRMU Library</h1>
                     <span>Library Circulation Desk</span>
                 </div>
             </div>
@@ -377,23 +449,39 @@
                     <div class="card">
                         <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table class="data-table">
+                                <table class="data-table table-fixed table-books">
+                                    <colgroup>
+                                        <col style="width: 27%;">
+                                        <col style="width: 12%;">
+                                        <col style="width: 15%;">
+                                        <col style="width: 11%;">
+                                        <col style="width: 9%;">
+                                        <col style="width: 12%;">
+                                        <col style="width: 14%;">
+                                    </colgroup>
                                     <thead>
                                         <tr>
-                                            <th>ISBN</th>
-                                            <th>Title & Author</th>
+                                            <th>Book</th>
                                             <th>Category</th>
                                             <th>Publisher / Year</th>
-                                            <th>Shelf Location</th>
-                                            <th>Copies (Avail / Total)</th>
+                                            <th>Shelf</th>
+                                            <th>Copies</th>
                                             <th>Status</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody id="books-table-body">
-                                        <tr><td colspan="8" class="empty-state">Loading books...</td></tr>
+                                        <tr><td colspan="7" class="empty-state">Loading books...</td></tr>
                                     </tbody>
                                 </table>
+                            </div>
+                        </div>
+                        <div class="table-pagination">
+                            <div class="pagination-info" id="books-page-info">Showing 0 of 0 titles</div>
+                            <div class="pagination-controls">
+                                <button class="btn btn-sm btn-outline" id="books-prev-btn" disabled>Previous</button>
+                                <span class="pagination-page" id="books-page-label">Page 1 of 1</span>
+                                <button class="btn btn-sm btn-outline" id="books-next-btn" disabled>Next</button>
                             </div>
                         </div>
                     </div>
@@ -439,21 +527,29 @@
                     <div class="card">
                         <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table class="data-table">
+                                <table class="data-table table-fixed table-members">
+                                    <colgroup>
+                                        <col style="width: 25%;">
+                                        <col style="width: 20%;">
+                                        <col style="width: 10%;">
+                                        <col style="width: 10%;">
+                                        <col style="width: 10%;">
+                                        <col style="width: 12%;">
+                                        <col style="width: 13%;">
+                                    </colgroup>
                                     <thead>
                                         <tr>
-                                            <th>Member Code</th>
-                                            <th>Full Name</th>
-                                            <th>Contact Info</th>
+                                            <th>Member</th>
+                                            <th>Contact</th>
                                             <th>Type</th>
-                                            <th>Membership Date</th>
-                                            <th>Holding / Limit</th>
+                                            <th>Joined</th>
+                                            <th>Borrowed</th>
                                             <th>Status</th>
                                             <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody id="members-table-body">
-                                        <tr><td colspan="8" class="empty-state">Loading members...</td></tr>
+                                        <tr><td colspan="7" class="empty-state">Loading members...</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -472,7 +568,7 @@
 
                     <div class="dashboard-grid">
                         <!-- Issue Form -->
-                        <div class="card">
+                        <div class="card card-picker-host">
                             <div class="card-header">
                                 <div class="card-title">
                                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
@@ -483,9 +579,18 @@
                                 <form id="form-issue-book">
                                     <div class="form-group">
                                         <label class="form-label">Select Book <span class="required">*</span></label>
-                                        <select id="issue-book-select" class="form-control" required>
-                                            <option value="">-- Choose a title from catalog --</option>
-                                        </select>
+                                        <input type="text" id="issue-book-search" class="form-control" placeholder="Type to search by title, author or ISBN..." style="margin-bottom: 8px;">
+                                        <input type="hidden" id="issue-book-id" value="">
+                                        <div class="book-picker" id="issue-book-picker">
+                                            <button type="button" class="form-control book-picker-trigger is-placeholder" id="issue-book-trigger" aria-haspopup="listbox" aria-expanded="false">
+                                                <span class="book-picker-trigger-text" id="issue-book-trigger-text">-- Choose a title from catalog --</span>
+                                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                            </button>
+                                            <div class="book-picker-panel" id="issue-book-panel" role="listbox" aria-label="Book catalog">
+                                                <div class="book-picker-list" id="issue-book-list"></div>
+                                            </div>
+                                        </div>
+                                        <small id="issue-book-result-hint" style="font-size:0.72rem; color:var(--text-muted); margin-top:4px; display:block;"></small>
                                         <small id="issue-book-stock-hint" style="font-size:0.75rem; color:var(--text-muted); margin-top:4px; display:block;"></small>
                                     </div>
 
@@ -528,7 +633,7 @@
                                 </form>
 
                                 <div id="issue-success-slip" style="display:none;" class="slip-box">
-                                    <div class="slip-title">CAMPUS CENTRAL LIBRARY - ISSUE SLIP</div>
+                                    <div class="slip-title">K.R. MANGALAM UNIVERSITY LIBRARY - ISSUE SLIP</div>
                                     <div id="slip-content"></div>
                                     <div style="text-align:right; margin-top:8px;">
                                         <button class="btn btn-sm btn-outline" onclick="window.print()">Print Slip</button>

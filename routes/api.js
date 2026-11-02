@@ -1,20 +1,125 @@
 /**
- * REST API Routes for CampusLib LMS
- * Handles Authentication, Books, Members, Circulation, Reports, and Overdue management.
+ * REST API Routes for KRMU Library — MongoDB edition
+ * Handles Authentication, Books, Members, Circulation, Reports and Overdue
+ * management. All handlers are async and talk to MongoDB through the
+ * shared data layer in database/db.js.
+ *
+ * Response contracts (field names, date formats) are identical to the
+ * previous SQLite implementation so the frontend needs no changes.
  */
 
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
-const { db, runTransaction, logAudit, updateOverdueLoans } = require('../database/db');
-const { requireAuth, requireRole } = require('../middleware/auth');
+const {
+    getDb,
+    nextSequence,
+    logAudit,
+    refreshOverdueLoans,
+    resetDemoData,
+    toDate,
+    toDateOnly,
+    toDateTime,
+    startOfDayUTC,
+    addDays,
+    daysBetween,
+    escapeRegex
+} = require('../database/db');
+
+const collection = (name) => getDb().collection(name);
+
+// ====================================================================
+// SHARED SERIALIZATION HELPERS
+// ====================================================================
+/** Remove MongoDB's internal _id and keep the public document shape. */
+function publicDoc(doc) {
+    if (!doc) return doc;
+    const { _id, ...rest } = doc;
+    return rest;
+}
+
+function serializeMember(member) {
+    return {
+        ...publicDoc(member),
+        membership_date: toDateOnly(member.membership_date),
+        created_at: toDateTime(member.created_at)
+    };
+}
+
+function serializeBook(book) {
+    return {
+        ...publicDoc(book),
+        created_at: toDateTime(book.created_at)
+    };
+}
+
+async function staffMapFor(ids) {
+    const unique = [...new Set(ids.filter((id) => id !== null && id !== undefined))];
+    if (!unique.length) return new Map();
+    const docs = await collection('staffs').find({ staff_id: { $in: unique } }).toArray();
+    return new Map(docs.map((doc) => [doc.staff_id, doc]));
+}
+
+/**
+ * Join loans with their book / member / staff documents. Produces the same
+ * flat row shape the SQLite JOIN queries returned.
+ */
+async function hydrateLoans(loans, { includeBookStock = false } = {}) {
+    if (!loans.length) return [];
+
+    const bookIds = [...new Set(loans.map((l) => l.book_id))];
+    const memberIds = [...new Set(loans.map((l) => l.member_id))];
+
+    const [books, members, staffs] = await Promise.all([
+        collection('books').find({ book_id: { $in: bookIds } }).toArray(),
+        collection('members').find({ member_id: { $in: memberIds } }).toArray(),
+        staffMapFor(loans.map((l) => l.staff_id))
+    ]);
+
+    const bookMap = new Map(books.map((b) => [b.book_id, b]));
+    const memberMap = new Map(members.map((m) => [m.member_id, m]));
+
+    return loans.map((loan) => {
+        const book = bookMap.get(loan.book_id) || {};
+        const member = memberMap.get(loan.member_id) || {};
+        const staff = loan.staff_id ? staffs.get(loan.staff_id) : null;
+
+        return {
+            ...publicDoc(loan),
+            issue_date: toDateOnly(loan.issue_date),
+            due_date: toDateOnly(loan.due_date),
+            return_date: toDateOnly(loan.return_date),
+            created_at: toDateTime(loan.created_at),
+            book_title: book.title,
+            isbn: book.isbn,
+            genre: book.genre,
+            shelf_location: book.shelf_location,
+            ...(includeBookStock
+                ? { available_copies: book.available_copies, total_copies: book.total_copies }
+                : {}),
+            member_code: member.member_code,
+            member_name: member.full_name,
+            member_email: member.email,
+            member_phone: member.phone,
+            staff_name: staff ? staff.full_name : null
+        };
+    });
+}
+
+async function activeStaff(req, requestedId) {
+    if (requestedId) {
+        const staff = await collection('staffs').findOne({ staff_id: Number(requestedId) });
+        if (staff) return staff;
+    }
+    return collection('staffs').findOne({ status: 'Active' }, { sort: { staff_id: 1 } });
+}
 
 // ====================================================================
 // 1. AUTHENTICATION & SESSION MANAGEMENT
 // ====================================================================
 
 // POST /api/auth/login
-router.post('/auth/login', (req, res) => {
+router.post('/auth/login', async (req, res) => {
     try {
         const { username, password } = req.body;
 
@@ -25,11 +130,11 @@ router.post('/auth/login', (req, res) => {
             });
         }
 
-        const staff = db.prepare(`
-            SELECT staff_id, staff_code, full_name, email, role, status, password
-            FROM staff
-            WHERE (email = ? OR staff_code = ?) AND status = 'Active'
-        `).get(username.trim(), username.trim());
+        const key = String(username).trim();
+        const staff = await collection('staffs').findOne({
+            status: 'Active',
+            $or: [{ email: key }, { staff_code: key }]
+        });
 
         if (!staff) {
             return res.status(401).json({
@@ -38,7 +143,7 @@ router.post('/auth/login', (req, res) => {
             });
         }
 
-        // Verify password using bcrypt or direct comparison for initial seed passwords
+        // Verify password using bcrypt or direct comparison for seed passwords
         let isMatch = false;
         if (staff.password.startsWith('$2a$') || staff.password.startsWith('$2b$')) {
             isMatch = bcrypt.compareSync(password, staff.password);
@@ -53,7 +158,6 @@ router.post('/auth/login', (req, res) => {
             });
         }
 
-        // Create session
         const sessionUser = {
             staff_id: staff.staff_id,
             staff_code: staff.staff_code,
@@ -63,7 +167,7 @@ router.post('/auth/login', (req, res) => {
         };
         req.session.user = sessionUser;
 
-        logAudit('STAFF_LOGIN', `${staff.full_name} (${staff.role}) logged in.`, staff.full_name);
+        await logAudit('STAFF_LOGIN', `${staff.full_name} (${staff.role}) logged in.`, staff.full_name);
 
         res.json({
             success: true,
@@ -77,7 +181,7 @@ router.post('/auth/login', (req, res) => {
 });
 
 // GET /api/auth/me (Check current session)
-router.get('/auth/me', (req, res) => {
+router.get('/auth/me', async (req, res) => {
     if (req.session && req.session.user) {
         return res.json({
             success: true,
@@ -85,30 +189,38 @@ router.get('/auth/me', (req, res) => {
             user: req.session.user
         });
     }
-    // If no active session, dynamically find the active staff member from the database
-    const defaultStaff = db.prepare("SELECT staff_id, staff_code, full_name, email, role FROM staff WHERE status = 'Active' ORDER BY staff_id ASC LIMIT 1").get();
-    res.json({
-        success: true,
-        authenticated: false,
-        user: defaultStaff || {
-            staff_id: null,
-            staff_code: 'GUEST',
-            full_name: 'Dr. Rajesh Sharma',
-            email: 'admin@library.edu',
-            role: 'Admin'
-        }
-    });
+
+    try {
+        const defaultStaff = await collection('staffs').findOne(
+            { status: 'Active' },
+            { sort: { staff_id: 1 }, projection: { staff_id: 1, staff_code: 1, full_name: 1, email: 1, role: 1 } }
+        );
+
+        res.json({
+            success: true,
+            authenticated: false,
+            user: defaultStaff ? publicDoc(defaultStaff) : {
+                staff_id: null,
+                staff_code: 'GUEST',
+                full_name: 'Dr. Rajesh Sharma',
+                email: 'admin@library.edu',
+                role: 'Admin'
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Failed to load staff session.' });
+    }
 });
 
 // POST /api/auth/logout
 router.post('/auth/logout', (req, res) => {
     const staffName = req.session && req.session.user ? req.session.user.full_name : 'Staff';
-    req.session.destroy((err) => {
+    req.session.destroy(async (err) => {
         if (err) {
             return res.status(500).json({ success: false, message: 'Could not log out.' });
         }
         res.clearCookie('connect.sid');
-        logAudit('STAFF_LOGOUT', `${staffName} logged out of session.`, staffName);
+        await logAudit('STAFF_LOGOUT', `${staffName} logged out of session.`, staffName);
         res.json({ success: true, message: 'Logged out successfully.' });
     });
 });
@@ -117,73 +229,125 @@ router.post('/auth/logout', (req, res) => {
 // 2. DASHBOARD & SUMMARY METRICS
 // Supports both /api/reports/dashboard AND /api/dashboard
 // ====================================================================
-function getDashboardMetrics(req, res) {
+async function getDashboardMetrics(req, res) {
     try {
-        updateOverdueLoans();
+        await refreshOverdueLoans();
+        const today = startOfDayUTC(new Date());
 
-        const totalBooks = db.prepare('SELECT COUNT(*) as count, COALESCE(SUM(total_copies), 0) as total_copies, COALESCE(SUM(available_copies), 0) as available_copies FROM books').get();
-        const totalMembers = db.prepare("SELECT COUNT(*) as count, SUM(CASE WHEN status = 'Active' THEN 1 ELSE 0 END) as active_count FROM members").get();
-        const activeLoans = db.prepare("SELECT COUNT(*) as count FROM loans WHERE return_date IS NULL AND status = 'Issued'").get();
-        const overdueLoans = db.prepare("SELECT COUNT(*) as count, COALESCE(SUM(fine_amount), 0) as pending_fines FROM loans WHERE return_date IS NULL AND status = 'Overdue'").get();
-        const collectedFines = db.prepare('SELECT COALESCE(SUM(fine_amount), 0) as total_collected FROM loans WHERE fine_paid = 1').get();
+        const [bookStats, totalMembers, activeMembers, activeLoans, overdueStats, collectedFines] = await Promise.all([
+            collection('books').aggregate([
+                {
+                    $group: {
+                        _id: null,
+                        count: { $sum: 1 },
+                        total_copies: { $sum: '$total_copies' },
+                        available_copies: { $sum: '$available_copies' }
+                    }
+                }
+            ]).toArray(),
+            collection('members').countDocuments({}),
+            collection('members').countDocuments({ status: 'Active' }),
+            collection('loans').countDocuments({ return_date: null, status: 'Issued' }),
+            collection('loans').aggregate([
+                { $match: { return_date: null, status: 'Overdue' } },
+                { $group: { _id: null, count: { $sum: 1 }, pending_fines: { $sum: '$fine_amount' } } }
+            ]).toArray(),
+            collection('loans').aggregate([
+                { $match: { fine_paid: 1 } },
+                { $group: { _id: null, total_collected: { $sum: '$fine_amount' } } }
+            ]).toArray()
+        ]);
 
-        // Recently Issued Books (last 6)
-        const recentIssues = db.prepare(`
-            SELECT l.loan_id, l.issue_date, l.due_date, l.status,
-                   b.title as book_title, b.isbn, b.genre,
-                   m.full_name as member_name, m.member_code, m.email as member_email
-            FROM loans l
-            JOIN books b ON l.book_id = b.book_id
-            JOIN members m ON l.member_id = m.member_id
-            WHERE l.return_date IS NULL
-            ORDER BY l.issue_date DESC, l.loan_id DESC
-            LIMIT 6
-        `).all();
+        const totals = bookStats[0] || { count: 0, total_copies: 0, available_copies: 0 };
+        const overdue = overdueStats[0] || { count: 0, pending_fines: 0 };
+        const fines = collectedFines[0] || { total_collected: 0 };
 
-        // Upcoming Due Dates / Overdue Alerts
-        const today = new Date().toISOString().split('T')[0];
-        const dueSoonOrOverdue = db.prepare(`
-            SELECT l.loan_id, l.issue_date, l.due_date, l.status, l.fine_amount,
-                   b.title as book_title, b.isbn,
-                   m.full_name as member_name, m.member_code, m.phone as member_phone,
-                   CAST(julianday(l.due_date) - julianday(?) AS INTEGER) as days_remaining
-            FROM loans l
-            JOIN books b ON l.book_id = b.book_id
-            JOIN members m ON l.member_id = m.member_id
-            WHERE l.return_date IS NULL AND (l.due_date <= date(?, '+3 days') OR l.status = 'Overdue')
-            ORDER BY l.due_date ASC
-            LIMIT 8
-        `).all(today, today);
+        // Recently Issued Books (last 6 active loans)
+        const recentLoanDocs = await collection('loans')
+            .find({ return_date: null })
+            .sort({ issue_date: -1, loan_id: -1 })
+            .limit(6)
+            .toArray();
+
+        const recentIssues = (await hydrateLoans(recentLoanDocs)).map((loan) => ({
+            loan_id: loan.loan_id,
+            issue_date: loan.issue_date,
+            due_date: loan.due_date,
+            status: loan.status,
+            book_title: loan.book_title,
+            isbn: loan.isbn,
+            genre: loan.genre,
+            member_name: loan.member_name,
+            member_code: loan.member_code,
+            member_email: loan.member_email
+        }));
+
+        // Upcoming Due Dates / Overdue Alerts (due within 3 days or already late)
+        const dueSoonLimit = addDays(today, 3);
+        const dueSoonDocs = await collection('loans')
+            .find({
+                return_date: null,
+                $or: [{ due_date: { $lte: dueSoonLimit } }, { status: 'Overdue' }]
+            })
+            .sort({ due_date: 1 })
+            .limit(8)
+            .toArray();
+
+        const dueSoonOrOverdue = (await hydrateLoans(dueSoonDocs)).map((loan) => ({
+            loan_id: loan.loan_id,
+            issue_date: loan.issue_date,
+            due_date: loan.due_date,
+            status: loan.status,
+            fine_amount: loan.fine_amount,
+            book_title: loan.book_title,
+            isbn: loan.isbn,
+            member_name: loan.member_name,
+            member_code: loan.member_code,
+            member_phone: loan.member_phone,
+            days_remaining: daysBetween(today, loan.due_date)
+        }));
 
         // Activity Logs
-        const recentLogs = db.prepare(`
-            SELECT log_id, action_type, description, staff_name, timestamp
-            FROM audit_logs
-            ORDER BY log_id DESC
-            LIMIT 7
-        `).all();
+        const recentLogs = (await collection('auditlogs')
+            .find({})
+            .sort({ log_id: -1 })
+            .limit(7)
+            .toArray())
+            .map((log) => ({
+                log_id: log.log_id,
+                action_type: log.action_type,
+                description: log.description,
+                staff_name: log.staff_name,
+                timestamp: toDateTime(log.timestamp)
+            }));
 
         // Category breakdown
-        const genreDistribution = db.prepare(`
-            SELECT genre, COUNT(*) as titles_count, SUM(total_copies) as total_copies, SUM(available_copies) as available_copies
-            FROM books
-            GROUP BY genre
-            ORDER BY total_copies DESC
-        `).all();
+        const genreDistribution = (await collection('books').aggregate([
+            {
+                $group: {
+                    _id: '$genre',
+                    titles_count: { $sum: 1 },
+                    total_copies: { $sum: '$total_copies' },
+                    available_copies: { $sum: '$available_copies' }
+                }
+            },
+            { $project: { _id: 0, genre: '$_id', titles_count: 1, total_copies: 1, available_copies: 1 } },
+            { $sort: { total_copies: -1 } }
+        ]).toArray());
 
         res.json({
             success: true,
             stats: {
-                totalTitles: totalBooks.count,
-                totalCopies: totalBooks.total_copies,
-                availableCopies: totalBooks.available_copies,
-                issuedCopies: totalBooks.total_copies - totalBooks.available_copies,
-                totalMembers: totalMembers.count,
-                activeMembers: totalMembers.active_count || 0,
-                activeLoans: activeLoans.count,
-                overdueLoans: overdueLoans.count,
-                pendingFines: overdueLoans.pending_fines,
-                collectedFines: collectedFines.total_collected
+                totalTitles: totals.count,
+                totalCopies: totals.total_copies,
+                availableCopies: totals.available_copies,
+                issuedCopies: totals.total_copies - totals.available_copies,
+                totalMembers,
+                activeMembers,
+                activeLoans,
+                overdueLoans: overdue.count,
+                pendingFines: overdue.pending_fines,
+                collectedFines: fines.total_collected
             },
             recentIssues,
             dueSoonOrOverdue,
@@ -202,76 +366,128 @@ router.get('/dashboard', getDashboardMetrics);
 // ====================================================================
 // 3. BOOK MANAGEMENT
 // ====================================================================
-router.get('/books', (req, res) => {
+router.get('/books', async (req, res) => {
     try {
-        const { search, genre, availability, sortBy = 'title', sortOrder = 'ASC' } = req.query;
+        const { search, genre, availability, sortBy = 'title', sortOrder = 'ASC', page, limit } = req.query;
 
-        let query = `
-            SELECT b.*,
-                   (b.total_copies - b.available_copies) as issued_copies,
-                   (SELECT COUNT(*) FROM reservations r WHERE r.book_id = b.book_id AND r.status = 'Pending') as reservation_count
-            FROM books b
-            WHERE 1=1
-        `;
-        const params = [];
+        const filter = {};
 
         if (search && search.trim() !== '') {
-            query += ` AND (b.title LIKE ? OR b.author LIKE ? OR b.isbn LIKE ? OR b.publisher LIKE ?)`;
-            const term = `%${search.trim()}%`;
-            params.push(term, term, term, term);
+            const rx = new RegExp(escapeRegex(search.trim()), 'i');
+            filter.$or = [{ title: rx }, { author: rx }, { isbn: rx }, { publisher: rx }];
         }
 
         if (genre && genre !== 'All') {
-            query += ` AND b.genre = ?`;
-            params.push(genre);
+            filter.genre = genre;
         }
 
         if (availability === 'available') {
-            query += ` AND b.available_copies > 0`;
+            filter.available_copies = { $gt: 0 };
         } else if (availability === 'unavailable') {
-            query += ` AND b.available_copies = 0`;
+            filter.available_copies = 0;
         }
+
+        const total = await collection('books').countDocuments(filter);
 
         const validSortCols = ['title', 'author', 'publication_year', 'available_copies', 'total_copies', 'book_id'];
         const col = validSortCols.includes(sortBy) ? sortBy : 'title';
-        const dir = sortOrder.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
-        query += ` ORDER BY b.${col} ${dir}`;
+        const dir = sortOrder.toUpperCase() === 'DESC' ? -1 : 1;
 
-        const books = db.prepare(query).all(...params);
-        const genres = db.prepare('SELECT DISTINCT genre FROM books ORDER BY genre ASC').all().map(g => g.genre);
+        const genres = (await collection('books').distinct('genre')).filter(Boolean).sort();
 
-        res.json({ success: true, count: books.length, genres, books });
+        let cursor = collection('books').find(filter).sort({ [col]: dir });
+        let responsePage = 1;
+        let perPage = total;
+        let totalPages = 1;
+
+        // Paginate only when the client explicitly asks for a page or page size.
+        if (page !== undefined || limit !== undefined) {
+            perPage = Math.min(Math.max(parseInt(limit, 10) || 25, 1), 1000);
+            totalPages = Math.max(1, Math.ceil(total / perPage));
+            responsePage = Math.min(Math.max(parseInt(page, 10) || 1, 1), totalPages);
+            const offset = (responsePage - 1) * perPage;
+            cursor = cursor.skip(offset).limit(perPage);
+        }
+
+        const bookDocs = await cursor.toArray();
+
+        // Pending reservation count per book (same as the SQL correlated subquery)
+        const bookIds = bookDocs.map((b) => b.book_id);
+        const reservationCounts = new Map();
+        if (bookIds.length) {
+            const grouped = await collection('reservations').aggregate([
+                { $match: { book_id: { $in: bookIds }, status: 'Pending' } },
+                { $group: { _id: '$book_id', count: { $sum: 1 } } }
+            ]).toArray();
+            for (const row of grouped) reservationCounts.set(row._id, row.count);
+        }
+
+        const books = bookDocs.map((book) => ({
+            ...serializeBook(book),
+            issued_copies: book.total_copies - book.available_copies,
+            reservation_count: reservationCounts.get(book.book_id) || 0
+        }));
+
+        res.json({
+            success: true,
+            count: total,
+            page: responsePage,
+            limit: perPage,
+            totalPages,
+            books,
+            genres
+        });
     } catch (err) {
         console.error('Fetch books error:', err);
         res.status(500).json({ success: false, message: 'Database error fetching books' });
     }
 });
 
-router.get('/books/:id', (req, res) => {
+router.get('/books/:id', async (req, res) => {
     try {
-        const bookId = req.params.id;
-        const book = db.prepare('SELECT * FROM books WHERE book_id = ?').get(bookId);
+        const bookId = parseInt(req.params.id, 10);
+        if (isNaN(bookId)) {
+            return res.status(404).json({ success: false, message: 'Book not found' });
+        }
 
+        const book = await collection('books').findOne({ book_id: bookId });
         if (!book) {
             return res.status(404).json({ success: false, message: 'Book not found' });
         }
 
-        const currentLoans = db.prepare(`
-            SELECT l.loan_id, l.issue_date, l.due_date, l.status,
-                   m.member_code, m.full_name, m.email, m.phone
-            FROM loans l
-            JOIN members m ON l.member_id = m.member_id
-            WHERE l.book_id = ? AND l.return_date IS NULL
-            ORDER BY l.due_date ASC
-        `).all(bookId);
+        const loanDocs = await collection('loans')
+            .find({ book_id: bookId, return_date: null })
+            .sort({ due_date: 1 })
+            .toArray();
 
-        res.json({ success: true, book, currentLoans });
+        const memberIds = [...new Set(loanDocs.map((l) => l.member_id))];
+        const members = memberIds.length
+            ? await collection('members').find({ member_id: { $in: memberIds } }).toArray()
+            : [];
+        const memberMap = new Map(members.map((m) => [m.member_id, m]));
+
+        const currentLoans = loanDocs.map((loan) => {
+            const member = memberMap.get(loan.member_id) || {};
+            return {
+                loan_id: loan.loan_id,
+                issue_date: toDateOnly(loan.issue_date),
+                due_date: toDateOnly(loan.due_date),
+                status: loan.status,
+                member_code: member.member_code,
+                full_name: member.full_name,
+                email: member.email,
+                phone: member.phone
+            };
+        });
+
+        res.json({ success: true, book: serializeBook(book), currentLoans });
     } catch (err) {
+        console.error('Fetch book detail error:', err);
         res.status(500).json({ success: false, message: 'Error fetching book details' });
     }
 });
 
-router.post('/books', (req, res) => {
+router.post('/books', async (req, res) => {
     try {
         const { isbn, title, author, publisher, publication_year, genre, total_copies, shelf_location } = req.body;
 
@@ -284,56 +500,59 @@ router.post('/books', (req, res) => {
             return res.status(400).json({ success: false, message: 'Total copies must be a positive integer.' });
         }
 
-        const existing = db.prepare('SELECT book_id FROM books WHERE isbn = ?').get(isbn.trim());
+        const existing = await collection('books').findOne({ isbn: isbn.trim() });
         if (existing) {
             return res.status(409).json({ success: false, message: `Book with ISBN "${isbn}" already exists in the catalog.` });
         }
 
         const year = publication_year ? parseInt(publication_year, 10) : null;
         const shelf = shelf_location ? shelf_location.trim() : 'Section A';
+        const book_id = await nextSequence('book');
 
-        const stmt = db.prepare(`
-            INSERT INTO books (isbn, title, author, publisher, publication_year, genre, total_copies, available_copies, shelf_location)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `);
-
-        const result = stmt.run(
-            isbn.trim(),
-            title.trim(),
-            author.trim(),
-            publisher ? publisher.trim() : null,
-            year,
-            genre.trim(),
-            copies,
-            copies,
-            shelf
-        );
+        await collection('books').insertOne({
+            book_id,
+            isbn: isbn.trim(),
+            title: title.trim(),
+            author: author.trim(),
+            publisher: publisher ? publisher.trim() : null,
+            publication_year: year,
+            genre: genre.trim(),
+            total_copies: copies,
+            available_copies: copies,
+            shelf_location: shelf,
+            cover_color: '#1e3a8a',
+            created_at: new Date()
+        });
 
         const staffName = req.session && req.session.user ? req.session.user.full_name : (req.body.staff_name || 'Admin');
-        logAudit('BOOK_ADD', `Added book "${title.trim()}" (ISBN: ${isbn.trim()}, Copies: ${copies})`, staffName);
+        await logAudit('BOOK_ADD', `Added book "${title.trim()}" (ISBN: ${isbn.trim()}, Copies: ${copies})`, staffName);
 
         res.status(201).json({
             success: true,
             message: `Book "${title}" added successfully.`,
-            bookId: result.lastInsertRowid
+            bookId: book_id
         });
     } catch (err) {
         res.status(500).json({ success: false, message: 'Failed to add book: ' + err.message });
     }
 });
 
-router.put('/books/:id', (req, res) => {
+router.put('/books/:id', async (req, res) => {
     try {
-        const bookId = req.params.id;
+        const bookId = parseInt(req.params.id, 10);
         const { isbn, title, author, publisher, publication_year, genre, total_copies, shelf_location } = req.body;
 
-        const currentBook = db.prepare('SELECT * FROM books WHERE book_id = ?').get(bookId);
+        if (isNaN(bookId)) {
+            return res.status(404).json({ success: false, message: 'Book not found' });
+        }
+
+        const currentBook = await collection('books').findOne({ book_id: bookId });
         if (!currentBook) {
             return res.status(404).json({ success: false, message: 'Book not found' });
         }
 
         if (isbn && isbn.trim() !== currentBook.isbn) {
-            const conflict = db.prepare('SELECT book_id FROM books WHERE isbn = ? AND book_id != ?').get(isbn.trim(), bookId);
+            const conflict = await collection('books').findOne({ isbn: isbn.trim(), book_id: { $ne: bookId } });
             if (conflict) {
                 return res.status(409).json({ success: false, message: 'Another book already uses this ISBN.' });
             }
@@ -353,30 +572,26 @@ router.put('/books/:id', (req, res) => {
         }
 
         const copyDifference = newTotalCopies - currentBook.total_copies;
-        const newAvailableCopies = currentBook.available_copies + copyDifference;
 
-        const stmt = db.prepare(`
-            UPDATE books
-            SET isbn = ?, title = ?, author = ?, publisher = ?, publication_year = ?,
-                genre = ?, total_copies = ?, available_copies = ?, shelf_location = ?
-            WHERE book_id = ?
-        `);
-
-        stmt.run(
-            isbn ? isbn.trim() : currentBook.isbn,
-            title ? title.trim() : currentBook.title,
-            author ? author.trim() : currentBook.author,
-            publisher !== undefined ? publisher : currentBook.publisher,
-            publication_year ? parseInt(publication_year, 10) : currentBook.publication_year,
-            genre ? genre.trim() : currentBook.genre,
-            newTotalCopies,
-            newAvailableCopies,
-            shelf_location ? shelf_location.trim() : currentBook.shelf_location,
-            bookId
+        await collection('books').updateOne(
+            { book_id: bookId },
+            {
+                $set: {
+                    isbn: isbn ? isbn.trim() : currentBook.isbn,
+                    title: title ? title.trim() : currentBook.title,
+                    author: author ? author.trim() : currentBook.author,
+                    publisher: publisher !== undefined ? publisher : currentBook.publisher,
+                    publication_year: publication_year ? parseInt(publication_year, 10) : currentBook.publication_year,
+                    genre: genre ? genre.trim() : currentBook.genre,
+                    total_copies: newTotalCopies,
+                    available_copies: currentBook.available_copies + copyDifference,
+                    shelf_location: shelf_location ? shelf_location.trim() : currentBook.shelf_location
+                }
+            }
         );
 
         const staffName = req.session && req.session.user ? req.session.user.full_name : (req.body.staff_name || 'Admin');
-        logAudit('BOOK_UPDATE', `Updated book details for "${title || currentBook.title}" (ID: ${bookId})`, staffName);
+        await logAudit('BOOK_UPDATE', `Updated book details for "${title || currentBook.title}" (ID: ${bookId})`, staffName);
 
         res.json({ success: true, message: 'Book details updated successfully.' });
     } catch (err) {
@@ -384,30 +599,32 @@ router.put('/books/:id', (req, res) => {
     }
 });
 
-router.delete('/books/:id', (req, res) => {
+router.delete('/books/:id', async (req, res) => {
     try {
-        const bookId = req.params.id;
-        const book = db.prepare('SELECT * FROM books WHERE book_id = ?').get(bookId);
+        const bookId = parseInt(req.params.id, 10);
+        if (isNaN(bookId)) {
+            return res.status(404).json({ success: false, message: 'Book not found' });
+        }
+
+        const book = await collection('books').findOne({ book_id: bookId });
         if (!book) {
             return res.status(404).json({ success: false, message: 'Book not found' });
         }
 
-        const activeLoans = db.prepare('SELECT COUNT(*) as count FROM loans WHERE book_id = ? AND return_date IS NULL').get(bookId);
-        if (activeLoans && activeLoans.count > 0) {
+        const activeLoans = await collection('loans').countDocuments({ book_id: bookId, return_date: null });
+        if (activeLoans > 0) {
             return res.status(400).json({
                 success: false,
-                message: `Cannot delete book. ${activeLoans.count} copy/copies are currently borrowed. They must be returned first.`
+                message: `Cannot delete book. ${activeLoans} copy/copies are currently borrowed. They must be returned first.`
             });
         }
 
-        runTransaction((tx) => {
-            tx.prepare('DELETE FROM reservations WHERE book_id = ?').run(bookId);
-            tx.prepare('DELETE FROM loans WHERE book_id = ?').run(bookId);
-            tx.prepare('DELETE FROM books WHERE book_id = ?').run(bookId);
-        });
+        await collection('reservations').deleteMany({ book_id: bookId });
+        await collection('loans').deleteMany({ book_id: bookId });
+        await collection('books').deleteOne({ book_id: bookId });
 
         const staffName = req.session && req.session.user ? req.session.user.full_name : (req.body.staff_name || 'Admin');
-        logAudit('BOOK_DELETE', `Deleted book "${book.title}" (ISBN: ${book.isbn})`, staffName);
+        await logAudit('BOOK_DELETE', `Deleted book "${book.title}" (ISBN: ${book.isbn})`, staffName);
 
         res.json({ success: true, message: `Book "${book.title}" was removed from the library catalog.` });
     } catch (err) {
@@ -418,75 +635,111 @@ router.delete('/books/:id', (req, res) => {
 // ====================================================================
 // 4. MEMBER MANAGEMENT
 // ====================================================================
-router.get('/members', (req, res) => {
+router.get('/members', async (req, res) => {
     try {
         const { search, status, type } = req.query;
-        let query = `
-            SELECT m.*,
-                   (SELECT COUNT(*) FROM loans l WHERE l.member_id = m.member_id AND l.return_date IS NULL) as currently_borrowed,
-                   (SELECT COALESCE(SUM(l.fine_amount), 0) FROM loans l WHERE l.member_id = m.member_id AND l.return_date IS NULL AND l.status = 'Overdue') as pending_fines
-            FROM members m
-            WHERE 1=1
-        `;
-        const params = [];
+        const filter = {};
 
         if (search && search.trim() !== '') {
-            query += ` AND (m.full_name LIKE ? OR m.member_code LIKE ? OR m.email LIKE ? OR m.phone LIKE ?)`;
-            const term = `%${search.trim()}%`;
-            params.push(term, term, term, term);
+            const rx = new RegExp(escapeRegex(search.trim()), 'i');
+            filter.$or = [{ full_name: rx }, { member_code: rx }, { email: rx }, { phone: rx }];
         }
 
         if (status && status !== 'All') {
-            query += ` AND m.status = ?`;
-            params.push(status);
+            filter.status = status;
         }
 
         if (type && type !== 'All') {
-            query += ` AND m.membership_type = ?`;
-            params.push(type);
+            filter.membership_type = type;
         }
 
-        query += ` ORDER BY m.member_id DESC`;
-        const members = db.prepare(query).all(...params);
+        const memberDocs = await collection('members').find(filter).sort({ member_id: -1 }).toArray();
+
+        const memberIds = memberDocs.map((m) => m.member_id);
+        const stats = new Map();
+        if (memberIds.length) {
+            const grouped = await collection('loans').aggregate([
+                { $match: { member_id: { $in: memberIds }, return_date: null } },
+                {
+                    $group: {
+                        _id: '$member_id',
+                        currently_borrowed: { $sum: 1 },
+                        pending_fines: {
+                            $sum: { $cond: [{ $eq: ['$status', 'Overdue'] }, '$fine_amount', 0] }
+                        }
+                    }
+                }
+            ]).toArray();
+            for (const row of grouped) stats.set(row._id, row);
+        }
+
+        const members = memberDocs.map((member) => {
+            const stat = stats.get(member.member_id);
+            return {
+                ...serializeMember(member),
+                currently_borrowed: stat ? stat.currently_borrowed : 0,
+                pending_fines: stat ? stat.pending_fines : 0
+            };
+        });
 
         res.json({ success: true, count: members.length, members });
     } catch (err) {
+        console.error('Fetch members error:', err);
         res.status(500).json({ success: false, message: 'Database error fetching members' });
     }
 });
 
-router.get('/members/:id', (req, res) => {
+router.get('/members/:id', async (req, res) => {
     try {
-        const memberId = req.params.id;
-        const member = db.prepare('SELECT * FROM members WHERE member_id = ?').get(memberId);
+        const memberId = parseInt(req.params.id, 10);
+        if (isNaN(memberId)) {
+            return res.status(404).json({ success: false, message: 'Member not found' });
+        }
+
+        const member = await collection('members').findOne({ member_id: memberId });
         if (!member) {
             return res.status(404).json({ success: false, message: 'Member not found' });
         }
 
-        const activeLoans = db.prepare(`
-            SELECT l.*, b.title as book_title, b.isbn, b.genre
-            FROM loans l
-            JOIN books b ON l.book_id = b.book_id
-            WHERE l.member_id = ? AND l.return_date IS NULL
-            ORDER BY l.due_date ASC
-        `).all(memberId);
+        const [activeDocs, pastDocs] = await Promise.all([
+            collection('loans').find({ member_id: memberId, return_date: null }).sort({ due_date: 1 }).toArray(),
+            collection('loans').find({ member_id: memberId, return_date: { $ne: null } }).sort({ return_date: -1 }).limit(15).toArray()
+        ]);
 
-        const pastLoans = db.prepare(`
-            SELECT l.*, b.title as book_title, b.isbn
-            FROM loans l
-            JOIN books b ON l.book_id = b.book_id
-            WHERE l.member_id = ? AND l.return_date IS NOT NULL
-            ORDER BY l.return_date DESC
-            LIMIT 15
-        `).all(memberId);
+        const allDocs = [...activeDocs, ...pastDocs];
+        const bookIds = [...new Set(allDocs.map((l) => l.book_id))];
+        const books = bookIds.length
+            ? await collection('books').find({ book_id: { $in: bookIds } }).toArray()
+            : [];
+        const bookMap = new Map(books.map((b) => [b.book_id, b]));
 
-        res.json({ success: true, member, activeLoans, pastLoans });
+        const shape = (loan) => {
+            const book = bookMap.get(loan.book_id) || {};
+            return {
+                ...publicDoc(loan),
+                issue_date: toDateOnly(loan.issue_date),
+                due_date: toDateOnly(loan.due_date),
+                return_date: toDateOnly(loan.return_date),
+                created_at: toDateTime(loan.created_at),
+                book_title: book.title,
+                isbn: book.isbn,
+                genre: book.genre
+            };
+        };
+
+        res.json({
+            success: true,
+            member: serializeMember(member),
+            activeLoans: activeDocs.map(shape),
+            pastLoans: pastDocs.map(shape)
+        });
     } catch (err) {
+        console.error('Fetch member profile error:', err);
         res.status(500).json({ success: false, message: 'Database error fetching member profile' });
     }
 });
 
-router.post('/members', (req, res) => {
+router.post('/members', async (req, res) => {
     try {
         const { full_name, email, phone, address, membership_type, max_borrow_limit } = req.body;
 
@@ -494,40 +747,38 @@ router.post('/members', (req, res) => {
             return res.status(400).json({ success: false, message: 'Full Name, Email, and Phone are required.' });
         }
 
-        const existing = db.prepare('SELECT member_id FROM members WHERE email = ?').get(email.trim().toLowerCase());
+        const emailKey = email.trim().toLowerCase();
+        const existing = await collection('members').findOne({ email: emailKey });
         if (existing) {
             return res.status(409).json({ success: false, message: 'A member with this email address already exists.' });
         }
 
         const currentYear = new Date().getFullYear();
-        const lastMember = db.prepare('SELECT member_id FROM members ORDER BY member_id DESC LIMIT 1').get();
-        const nextId = (lastMember ? lastMember.member_id : 0) + 1;
-        const memberCode = `MEM-${currentYear}-${String(nextId).padStart(3, '0')}`;
-
+        const member_id = await nextSequence('member');
+        const memberCode = `MEM-${currentYear}-${String(member_id).padStart(3, '0')}`;
         const limit = max_borrow_limit ? parseInt(max_borrow_limit, 10) : (membership_type === 'Faculty' ? 8 : 4);
 
-        const stmt = db.prepare(`
-            INSERT INTO members (member_code, full_name, email, phone, address, membership_type, status, max_borrow_limit)
-            VALUES (?, ?, ?, ?, ?, ?, 'Active', ?)
-        `);
-
-        const result = stmt.run(
-            memberCode,
-            full_name.trim(),
-            email.trim().toLowerCase(),
-            phone.trim(),
-            address ? address.trim() : '',
-            membership_type || 'Student',
-            limit
-        );
+        await collection('members').insertOne({
+            member_id,
+            member_code: memberCode,
+            full_name: full_name.trim(),
+            email: emailKey,
+            phone: phone.trim(),
+            address: address ? address.trim() : '',
+            membership_type: membership_type || 'Student',
+            membership_date: startOfDayUTC(new Date()),
+            status: 'Active',
+            max_borrow_limit: limit,
+            created_at: new Date()
+        });
 
         const staffName = req.session && req.session.user ? req.session.user.full_name : (req.body.staff_name || 'Circulation Desk');
-        logAudit('MEMBER_REGISTER', `Registered member ${full_name.trim()} (${memberCode})`, staffName);
+        await logAudit('MEMBER_REGISTER', `Registered member ${full_name.trim()} (${memberCode})`, staffName);
 
         res.status(201).json({
             success: true,
             message: `Member ${full_name} registered successfully with ID ${memberCode}.`,
-            memberId: result.lastInsertRowid,
+            memberId: member_id,
             memberCode
         });
     } catch (err) {
@@ -535,42 +786,44 @@ router.post('/members', (req, res) => {
     }
 });
 
-router.put('/members/:id', (req, res) => {
+router.put('/members/:id', async (req, res) => {
     try {
-        const memberId = req.params.id;
+        const memberId = parseInt(req.params.id, 10);
         const { full_name, email, phone, address, membership_type, status, max_borrow_limit } = req.body;
 
-        const currentMember = db.prepare('SELECT * FROM members WHERE member_id = ?').get(memberId);
+        if (isNaN(memberId)) {
+            return res.status(404).json({ success: false, message: 'Member not found' });
+        }
+
+        const currentMember = await collection('members').findOne({ member_id: memberId });
         if (!currentMember) {
             return res.status(404).json({ success: false, message: 'Member not found' });
         }
 
         if (email && email.trim().toLowerCase() !== currentMember.email) {
-            const conflict = db.prepare('SELECT member_id FROM members WHERE email = ? AND member_id != ?').get(email.trim().toLowerCase(), memberId);
+            const conflict = await collection('members').findOne({ email: email.trim().toLowerCase(), member_id: { $ne: memberId } });
             if (conflict) {
                 return res.status(409).json({ success: false, message: 'Another member is already using this email.' });
             }
         }
 
-        const stmt = db.prepare(`
-            UPDATE members
-            SET full_name = ?, email = ?, phone = ?, address = ?, membership_type = ?, status = ?, max_borrow_limit = ?
-            WHERE member_id = ?
-        `);
-
-        stmt.run(
-            full_name ? full_name.trim() : currentMember.full_name,
-            email ? email.trim().toLowerCase() : currentMember.email,
-            phone ? phone.trim() : currentMember.phone,
-            address !== undefined ? address.trim() : currentMember.address,
-            membership_type || currentMember.membership_type,
-            status || currentMember.status,
-            max_borrow_limit ? parseInt(max_borrow_limit, 10) : currentMember.max_borrow_limit,
-            memberId
+        await collection('members').updateOne(
+            { member_id: memberId },
+            {
+                $set: {
+                    full_name: full_name ? full_name.trim() : currentMember.full_name,
+                    email: email ? email.trim().toLowerCase() : currentMember.email,
+                    phone: phone ? phone.trim() : currentMember.phone,
+                    address: address !== undefined ? address.trim() : currentMember.address,
+                    membership_type: membership_type || currentMember.membership_type,
+                    status: status || currentMember.status,
+                    max_borrow_limit: max_borrow_limit ? parseInt(max_borrow_limit, 10) : currentMember.max_borrow_limit
+                }
+            }
         );
 
         const staffName = req.session && req.session.user ? req.session.user.full_name : (req.body.staff_name || 'Admin');
-        logAudit('MEMBER_UPDATE', `Updated member profile ${full_name || currentMember.full_name} (${currentMember.member_code})`, staffName);
+        await logAudit('MEMBER_UPDATE', `Updated member profile ${full_name || currentMember.full_name} (${currentMember.member_code})`, staffName);
 
         res.json({ success: true, message: 'Member profile updated successfully.' });
     } catch (err) {
@@ -578,30 +831,32 @@ router.put('/members/:id', (req, res) => {
     }
 });
 
-router.delete('/members/:id', (req, res) => {
+router.delete('/members/:id', async (req, res) => {
     try {
-        const memberId = req.params.id;
-        const member = db.prepare('SELECT * FROM members WHERE member_id = ?').get(memberId);
+        const memberId = parseInt(req.params.id, 10);
+        if (isNaN(memberId)) {
+            return res.status(404).json({ success: false, message: 'Member not found' });
+        }
+
+        const member = await collection('members').findOne({ member_id: memberId });
         if (!member) {
             return res.status(404).json({ success: false, message: 'Member not found' });
         }
 
-        const activeLoans = db.prepare('SELECT COUNT(*) as count FROM loans WHERE member_id = ? AND return_date IS NULL').get(memberId);
-        if (activeLoans && activeLoans.count > 0) {
+        const activeLoans = await collection('loans').countDocuments({ member_id: memberId, return_date: null });
+        if (activeLoans > 0) {
             return res.status(400).json({
                 success: false,
-                message: `Cannot delete member. Member currently has ${activeLoans.count} borrowed book(s). All books must be returned first.`
+                message: `Cannot delete member. Member currently has ${activeLoans} borrowed book(s). All books must be returned first.`
             });
         }
 
-        runTransaction((tx) => {
-            tx.prepare('DELETE FROM reservations WHERE member_id = ?').run(memberId);
-            tx.prepare('DELETE FROM loans WHERE member_id = ?').run(memberId);
-            tx.prepare('DELETE FROM members WHERE member_id = ?').run(memberId);
-        });
+        await collection('reservations').deleteMany({ member_id: memberId });
+        await collection('loans').deleteMany({ member_id: memberId });
+        await collection('members').deleteOne({ member_id: memberId });
 
         const staffName = req.session && req.session.user ? req.session.user.full_name : (req.body.staff_name || 'Admin');
-        logAudit('MEMBER_DELETE', `Deleted member record ${member.full_name} (${member.member_code})`, staffName);
+        await logAudit('MEMBER_DELETE', `Deleted member record ${member.full_name} (${member.member_code})`, staffName);
 
         res.json({ success: true, message: `Member ${member.full_name} removed successfully.` });
     } catch (err) {
@@ -612,79 +867,70 @@ router.delete('/members/:id', (req, res) => {
 // ====================================================================
 // 5. CIRCULATION: ISSUE, RETURN & TRANSACTION LOGS
 // ====================================================================
-router.get('/loans', (req, res) => {
+router.get('/loans', async (req, res) => {
     try {
-        updateOverdueLoans();
+        await refreshOverdueLoans();
         const { status, search } = req.query;
-
-        let query = `
-            SELECT l.*,
-                   b.title as book_title, b.isbn, b.genre, b.shelf_location,
-                   m.member_code, m.full_name as member_name, m.email as member_email, m.phone as member_phone,
-                   s.full_name as staff_name
-            FROM loans l
-            JOIN books b ON l.book_id = b.book_id
-            JOIN members m ON l.member_id = m.member_id
-            LEFT JOIN staff s ON l.staff_id = s.staff_id
-            WHERE 1=1
-        `;
-        const params = [];
+        const filter = {};
 
         if (status && status.toLowerCase() !== 'all') {
-            query += ` AND LOWER(l.status) = LOWER(?)`;
-            params.push(status);
+            filter.status = { $regex: `^${escapeRegex(status)}$`, $options: 'i' };
         }
 
         if (search && search.trim() !== '') {
-            query += ` AND (b.title LIKE ? OR b.isbn LIKE ? OR m.full_name LIKE ? OR m.member_code LIKE ?)`;
-            const term = `%${search.trim()}%`;
-            params.push(term, term, term, term);
+            const rx = new RegExp(escapeRegex(search.trim()), 'i');
+            const [bookMatches, memberMatches] = await Promise.all([
+                collection('books').find({ $or: [{ title: rx }, { isbn: rx }] }, { projection: { book_id: 1 } }).toArray(),
+                collection('members').find({ $or: [{ full_name: rx }, { member_code: rx }] }, { projection: { member_id: 1 } }).toArray()
+            ]);
+            filter.$or = [
+                { book_id: { $in: bookMatches.map((b) => b.book_id) } },
+                { member_id: { $in: memberMatches.map((m) => m.member_id) } }
+            ];
         }
 
-        query += ` ORDER BY l.loan_id DESC`;
-        const loans = db.prepare(query).all(...params);
+        const loanDocs = await collection('loans').find(filter).sort({ loan_id: -1 }).toArray();
+        const loans = await hydrateLoans(loanDocs);
 
         res.json({ success: true, count: loans.length, loans });
     } catch (err) {
+        console.error('Fetch loans error:', err);
         res.status(500).json({ success: false, message: 'Database error fetching circulation records' });
     }
 });
 
-router.get('/loans/:id', (req, res) => {
+router.get('/loans/:id', async (req, res) => {
     try {
-        updateOverdueLoans();
-        const loanId = req.params.id;
-        const loan = db.prepare(`
-            SELECT l.*,
-                   b.title as book_title, b.isbn, b.genre, b.shelf_location, b.available_copies, b.total_copies,
-                   m.member_code, m.full_name as member_name, m.email as member_email, m.phone as member_phone,
-                   s.full_name as staff_name
-            FROM loans l
-            JOIN books b ON l.book_id = b.book_id
-            JOIN members m ON l.member_id = m.member_id
-            LEFT JOIN staff s ON l.staff_id = s.staff_id
-            WHERE l.loan_id = ?
-        `).get(loanId);
-
-        if (!loan) {
+        await refreshOverdueLoans();
+        const loanId = parseInt(req.params.id, 10);
+        if (isNaN(loanId)) {
             return res.status(404).json({ success: false, message: 'Loan transaction record not found.' });
         }
 
+        const loanDoc = await collection('loans').findOne({ loan_id: loanId });
+        if (!loanDoc) {
+            return res.status(404).json({ success: false, message: 'Loan transaction record not found.' });
+        }
+
+        const [loan] = await hydrateLoans([loanDoc], { includeBookStock: true });
         res.json({ success: true, loan });
     } catch (err) {
         res.status(500).json({ success: false, message: 'Failed to retrieve loan record: ' + err.message });
     }
 });
 
-router.post('/loans/issue', (req, res) => {
+router.post('/loans/issue', async (req, res) => {
     try {
         const { book_id, member_id, loan_days = 14, remarks, due_date } = req.body;
 
-        if (!book_id || !member_id) {
+        const bookId = parseInt(book_id, 10);
+        const memberId = parseInt(member_id, 10);
+
+        if (!bookId || !memberId) {
             return res.status(400).json({ success: false, message: 'Book ID and Member ID are required to issue a book.' });
         }
 
-        const book = db.prepare('SELECT * FROM books WHERE book_id = ?').get(book_id);
+        const book = await collection('books').findOne({ book_id: bookId });
         if (!book) {
             return res.status(404).json({ success: false, message: 'Book not found in catalog.' });
         }
@@ -695,7 +941,7 @@ router.post('/loans/issue', (req, res) => {
             });
         }
 
-        const member = db.prepare('SELECT * FROM members WHERE member_id = ?').get(member_id);
+        const member = await collection('members').findOne({ member_id: memberId });
         if (!member) {
             return res.status(404).json({ success: false, message: 'Member not found.' });
         }
@@ -706,7 +952,7 @@ router.post('/loans/issue', (req, res) => {
             });
         }
 
-        const activeLoansCount = db.prepare('SELECT COUNT(*) as count FROM loans WHERE member_id = ? AND return_date IS NULL').get(member_id).count;
+        const activeLoansCount = await collection('loans').countDocuments({ member_id: memberId, return_date: null });
         if (activeLoansCount >= member.max_borrow_limit) {
             return res.status(400).json({
                 success: false,
@@ -714,50 +960,69 @@ router.post('/loans/issue', (req, res) => {
             });
         }
 
-        const today = new Date();
-        const issueDate = today.toISOString().split('T')[0];
+        // Atomic stock decrement — prevents two simultaneous issues from overselling.
+        const decrement = await collection('books').findOneAndUpdate(
+            { book_id: bookId, available_copies: { $gt: 0 } },
+            { $inc: { available_copies: -1 } },
+            { returnDocument: 'after' }
+        );
+        const updatedBook = decrement && decrement.value ? decrement.value : decrement;
+        if (!updatedBook) {
+            return res.status(400).json({
+                success: false,
+                message: `Book "${book.title}" is currently Out of Stock. Another issue may have just taken the last copy.`
+            });
+        }
 
+        const today = startOfDayUTC(new Date());
+        const issueDate = toDateOnly(today);
         let finalDueDate;
-        if (due_date && due_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        if (due_date && /^\d{4}-\d{2}-\d{2}$/.test(due_date)) {
             finalDueDate = due_date;
         } else {
             const days = parseInt(loan_days, 10) || 14;
-            const dueDateObj = new Date(today.getTime() + days * 24 * 60 * 60 * 1000);
-            finalDueDate = dueDateObj.toISOString().split('T')[0];
+            finalDueDate = toDateOnly(addDays(today, days));
         }
 
-        let staffId = req.session && req.session.user ? req.session.user.staff_id : req.body.staff_id;
-        let validStaff = null;
-        if (staffId) {
-            validStaff = db.prepare('SELECT staff_id, full_name FROM staff WHERE staff_id = ?').get(staffId);
+        const requestedStaffId = req.session && req.session.user ? req.session.user.staff_id : req.body.staff_id;
+        const staff = await activeStaff(req, requestedStaffId);
+        const finalStaffId = staff ? staff.staff_id : null;
+        const staffName = staff ? staff.full_name : (req.body.staff_name || 'Circulation Desk');
+
+        const loan_id = await nextSequence('loan');
+        try {
+            await collection('loans').insertOne({
+                loan_id,
+                book_id: bookId,
+                member_id: memberId,
+                staff_id: finalStaffId,
+                issue_date: today,
+                due_date: toDate(finalDueDate),
+                return_date: null,
+                status: 'Issued',
+                fine_amount: 0,
+                fine_paid: 0,
+                remarks: remarks || 'Standard Loan',
+                created_at: new Date()
+            });
+        } catch (insertErr) {
+            // Compensating rollback: give the copy back if the loan could not be saved.
+            await collection('books').updateOne({ book_id: bookId }, { $inc: { available_copies: 1 } });
+            throw insertErr;
         }
-        if (!validStaff) {
-            validStaff = db.prepare("SELECT staff_id, full_name FROM staff WHERE status = 'Active' ORDER BY staff_id ASC LIMIT 1").get();
-        }
 
-        const finalStaffId = validStaff ? validStaff.staff_id : null;
-        const staffName = validStaff ? validStaff.full_name : (req.body.staff_name || 'Circulation Desk');
+        await collection('reservations').updateMany(
+            { book_id: bookId, member_id: memberId, status: 'Pending' },
+            { $set: { status: 'Fulfilled' } }
+        );
 
-        let newLoanId;
-        runTransaction((tx) => {
-            const insertStmt = tx.prepare(`
-                INSERT INTO loans (book_id, member_id, staff_id, issue_date, due_date, status, fine_amount, remarks)
-                VALUES (?, ?, ?, ?, ?, 'Issued', 0.00, ?)
-            `);
-            const loanResult = insertStmt.run(book_id, member_id, finalStaffId, issueDate, finalDueDate, remarks || 'Standard Loan');
-            newLoanId = loanResult.lastInsertRowid;
-
-            tx.prepare('UPDATE books SET available_copies = available_copies - 1 WHERE book_id = ?').run(book_id);
-            tx.prepare("UPDATE reservations SET status = 'Fulfilled' WHERE book_id = ? AND member_id = ? AND status = 'Pending'").run(book_id, member_id);
-        });
-
-        logAudit('LOAN_ISSUE', `Issued "${book.title}" to ${member.full_name} (${member.member_code}). Due on ${finalDueDate}.`, staffName);
+        await logAudit('LOAN_ISSUE', `Issued "${book.title}" to ${member.full_name} (${member.member_code}). Due on ${finalDueDate}.`, staffName);
 
         res.status(201).json({
             success: true,
             message: `Book "${book.title}" issued successfully to ${member.full_name}.`,
             loan: {
-                loan_id: newLoanId,
+                loan_id,
                 book_title: book.title,
                 member_name: member.full_name,
                 issue_date: issueDate,
@@ -765,110 +1030,127 @@ router.post('/loans/issue', (req, res) => {
             }
         });
     } catch (err) {
+        console.error('Issue book error:', err);
         res.status(500).json({ success: false, message: 'Failed to issue book: ' + err.message });
     }
 });
 
-router.post('/loans/:id/return', (req, res) => {
+router.post('/loans/:id/return', async (req, res) => {
     try {
-        const loanId = req.params.id;
+        const loanId = parseInt(req.params.id, 10);
         const { fine_paid = 1, remarks } = req.body;
 
-        const loan = db.prepare(`
-            SELECT l.*, b.title as book_title, b.available_copies, b.total_copies,
-                   m.full_name as member_name, m.member_code
-            FROM loans l
-            JOIN books b ON l.book_id = b.book_id
-            JOIN members m ON l.member_id = m.member_id
-            WHERE l.loan_id = ?
-        `).get(loanId);
+        if (isNaN(loanId)) {
+            return res.status(404).json({ success: false, message: 'Loan transaction record not found.' });
+        }
 
+        const loan = await collection('loans').findOne({ loan_id: loanId });
         if (!loan) {
             return res.status(404).json({ success: false, message: 'Loan transaction record not found.' });
         }
 
-        if (loan.return_date !== null) {
-            return res.status(400).json({ success: false, message: `This book was already returned on ${loan.return_date}.` });
+        const [book, member] = await Promise.all([
+            collection('books').findOne({ book_id: loan.book_id }),
+            collection('members').findOne({ member_id: loan.member_id })
+        ]);
+        const bookTitle = book ? book.title : 'Unknown title';
+        const memberName = member ? member.full_name : 'Unknown member';
+
+        if (loan.return_date !== null && loan.return_date !== undefined) {
+            return res.status(400).json({
+                success: false,
+                message: `This book was already returned on ${toDateOnly(loan.return_date)}.`
+            });
         }
 
-        const today = new Date().toISOString().split('T')[0];
-        let calculatedFine = 0.00;
-        if (today > loan.due_date) {
-            const dueDateObj = new Date(loan.due_date);
-            const returnDateObj = new Date(today);
-            const diffTime = Math.abs(returnDateObj - dueDateObj);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            calculatedFine = diffDays * 5.00; // ₹5 per day
+        const today = startOfDayUTC(new Date());
+        const todayStr = toDateOnly(today);
+        let calculatedFine = 0;
+        if (todayStr > toDateOnly(loan.due_date)) {
+            calculatedFine = daysBetween(loan.due_date, today) * 5;
         }
 
         const isFinePaid = calculatedFine > 0 ? (fine_paid ? 1 : 0) : 1;
-        const finalRemarks = remarks ? `${remarks} (Returned on ${today})` : (loan.remarks || 'Returned');
+        const finalRemarks = remarks ? `${remarks} (Returned on ${todayStr})` : (loan.remarks || 'Returned');
 
-        runTransaction((tx) => {
-            tx.prepare(`
-                UPDATE loans
-                SET return_date = ?,
-                    status = 'Returned',
-                    fine_amount = ?,
-                    fine_paid = ?,
-                    remarks = ?
-                WHERE loan_id = ?
-            `).run(today, calculatedFine, isFinePaid, finalRemarks, loanId);
+        await collection('loans').updateOne(
+            { loan_id: loanId },
+            {
+                $set: {
+                    return_date: today,
+                    status: 'Returned',
+                    fine_amount: calculatedFine,
+                    fine_paid: isFinePaid,
+                    remarks: finalRemarks
+                }
+            }
+        );
 
-            tx.prepare(`
-                UPDATE books
-                SET available_copies = MIN(total_copies, available_copies + 1)
-                WHERE book_id = ?
-            `).run(loan.book_id);
-        });
+        // Atomic stock restore, clamped to total_copies.
+        await collection('books').updateOne(
+            { book_id: loan.book_id },
+            [{ $set: { available_copies: { $min: ['$total_copies', { $add: ['$available_copies', 1] }] } } }]
+        );
 
         const staffName = req.session && req.session.user ? req.session.user.full_name : (req.body.staff_name || 'Circulation Desk');
         const fineMsg = calculatedFine > 0 ? ` (Overdue fine of ₹${calculatedFine.toFixed(2)} ${isFinePaid ? 'collected' : 'pending'})` : '';
-        logAudit('LOAN_RETURN', `Received return of "${loan.book_title}" from ${loan.member_name}${fineMsg}.`, staffName);
+        await logAudit('LOAN_RETURN', `Received return of "${bookTitle}" from ${memberName}${fineMsg}.`, staffName);
 
         res.json({
             success: true,
-            message: `Book "${loan.book_title}" successfully returned!${fineMsg}`,
+            message: `Book "${bookTitle}" successfully returned!${fineMsg}`,
             details: {
-                return_date: today,
+                return_date: todayStr,
                 fine_amount: calculatedFine,
                 fine_paid: isFinePaid
             }
         });
     } catch (err) {
+        console.error('Return book error:', err);
         res.status(500).json({ success: false, message: 'Failed to process return: ' + err.message });
     }
 });
 
-router.post('/loans/:id/renew', (req, res) => {
+router.post('/loans/:id/renew', async (req, res) => {
     try {
-        const loanId = req.params.id;
+        const loanId = parseInt(req.params.id, 10);
         const { additional_days = 14 } = req.body;
 
-        const loan = db.prepare(`
-            SELECT l.*, b.title as book_title, m.full_name as member_name
-            FROM loans l
-            JOIN books b ON l.book_id = b.book_id
-            JOIN members m ON l.member_id = m.member_id
-            WHERE l.loan_id = ?
-        `).get(loanId);
+        if (isNaN(loanId)) {
+            return res.status(404).json({ success: false, message: 'Loan record not found.' });
+        }
 
+        const loan = await collection('loans').findOne({ loan_id: loanId });
         if (!loan) {
             return res.status(404).json({ success: false, message: 'Loan record not found.' });
         }
 
-        if (loan.return_date !== null) {
+        if (loan.return_date !== null && loan.return_date !== undefined) {
             return res.status(400).json({ success: false, message: 'Cannot renew a book that has already been returned.' });
         }
 
-        const baseDate = new Date(loan.due_date) > new Date() ? new Date(loan.due_date) : new Date();
-        const days = parseInt(additional_days, 10) || 14;
-        const newDue = new Date(baseDate.getTime() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        const [book, member] = await Promise.all([
+            collection('books').findOne({ book_id: loan.book_id }),
+            collection('members').findOne({ member_id: loan.member_id })
+        ]);
 
-        db.prepare("UPDATE loans SET due_date = ?, status = 'Issued' WHERE loan_id = ?").run(newDue, loanId);
+        const now = startOfDayUTC(new Date());
+        const dueDate = toDate(loan.due_date);
+        const baseDate = dueDate > now ? dueDate : now;
+        const days = parseInt(additional_days, 10) || 14;
+        const newDue = toDateOnly(addDays(baseDate, days));
+
+        await collection('loans').updateOne(
+            { loan_id: loanId },
+            { $set: { due_date: toDate(newDue), status: 'Issued' } }
+        );
 
         const staffName = req.session && req.session.user ? req.session.user.full_name : (req.body.staff_name || 'Circulation Desk');
-        logAudit('LOAN_RENEW', `Renewed loan for "${loan.book_title}" to ${loan.member_name}. New due date: ${newDue}`, staffName);
+        await logAudit(
+            'LOAN_RENEW',
+            `Renewed loan for "${book ? book.title : 'Unknown'}" to ${member ? member.full_name : 'Unknown'}. New due date: ${newDue}`,
+            staffName
+        );
 
         res.json({
             success: true,
@@ -884,31 +1166,50 @@ router.post('/loans/:id/renew', (req, res) => {
 // 6. OVERDUE MANAGEMENT & REPORTS
 // Supports both /api/reports/overdue AND /api/overdue
 // ====================================================================
-function getOverdueList(req, res) {
+async function getOverdueList(req, res) {
     try {
-        updateOverdueLoans();
+        await refreshOverdueLoans();
+        const today = startOfDayUTC(new Date());
 
-        const today = new Date().toISOString().split('T')[0];
-        const overdueList = db.prepare(`
-            SELECT l.loan_id, l.issue_date, l.due_date, l.fine_amount, l.fine_paid, l.remarks,
-                   b.book_id, b.title as book_title, b.isbn, b.genre, b.shelf_location,
-                   m.member_id, m.member_code, m.full_name as member_name, m.email as member_email, m.phone as member_phone,
-                   CAST(julianday(?) - julianday(l.due_date) AS INTEGER) as days_overdue
-            FROM loans l
-            JOIN books b ON l.book_id = b.book_id
-            JOIN members m ON l.member_id = m.member_id
-            WHERE l.return_date IS NULL AND l.due_date < ?
-            ORDER BY days_overdue DESC
-        `).all(today, today);
+        const loanDocs = await collection('loans')
+            .find({ return_date: null, due_date: { $lt: today } })
+            .toArray();
 
-        const summary = db.prepare(`
-            SELECT COUNT(*) as count, COALESCE(SUM(fine_amount), 0) as total_fines
-            FROM loans
-            WHERE return_date IS NULL AND status = 'Overdue'
-        `).get();
+        const hydrated = await hydrateLoans(loanDocs);
+        const overdueList = hydrated
+            .map((loan) => ({
+                loan_id: loan.loan_id,
+                issue_date: loan.issue_date,
+                due_date: loan.due_date,
+                fine_amount: loan.fine_amount,
+                fine_paid: loan.fine_paid,
+                remarks: loan.remarks,
+                book_id: loan.book_id,
+                book_title: loan.book_title,
+                isbn: loan.isbn,
+                genre: loan.genre,
+                shelf_location: loan.shelf_location,
+                member_id: loan.member_id,
+                member_code: loan.member_code,
+                member_name: loan.member_name,
+                member_email: loan.member_email,
+                member_phone: loan.member_phone,
+                days_overdue: daysBetween(loan.due_date, today)
+            }))
+            .sort((a, b) => b.days_overdue - a.days_overdue);
+
+        const summaryAgg = await collection('loans').aggregate([
+            { $match: { return_date: null, status: 'Overdue' } },
+            { $group: { _id: null, count: { $sum: 1 }, total_fines: { $sum: '$fine_amount' } } }
+        ]).toArray();
+
+        const summary = summaryAgg[0]
+            ? { count: summaryAgg[0].count, total_fines: summaryAgg[0].total_fines }
+            : { count: 0, total_fines: 0 };
 
         res.json({ success: true, summary, overdueList });
     } catch (err) {
+        console.error('Overdue list error:', err);
         res.status(500).json({ success: false, message: 'Database error fetching overdue records' });
     }
 }
@@ -916,31 +1217,37 @@ function getOverdueList(req, res) {
 router.get('/reports/overdue', getOverdueList);
 router.get('/overdue', getOverdueList);
 
-router.post('/overdue/remind/:id', (req, res) => {
+router.post('/overdue/remind/:id', async (req, res) => {
     try {
-        const loanId = req.params.id;
-        const loan = db.prepare(`
-            SELECT l.*, b.title, m.full_name, m.email, m.phone
-            FROM loans l
-            JOIN books b ON l.book_id = b.book_id
-            JOIN members m ON l.member_id = m.member_id
-            WHERE l.loan_id = ?
-        `).get(loanId);
+        const loanId = parseInt(req.params.id, 10);
+        if (isNaN(loanId)) {
+            return res.status(404).json({ success: false, message: 'Loan record not found' });
+        }
 
+        const loan = await collection('loans').findOne({ loan_id: loanId });
         if (!loan) {
             return res.status(404).json({ success: false, message: 'Loan record not found' });
         }
 
-        const dateStr = new Date().toISOString().split('T')[0];
+        const [book, member] = await Promise.all([
+            collection('books').findOne({ book_id: loan.book_id }),
+            collection('members').findOne({ member_id: loan.member_id })
+        ]);
+
+        const dateStr = toDateOnly(startOfDayUTC(new Date()));
         const updatedRemarks = `${loan.remarks ? loan.remarks + ' | ' : ''}Reminder notice dispatched on ${dateStr}`;
-        db.prepare('UPDATE loans SET remarks = ? WHERE loan_id = ?').run(updatedRemarks, loanId);
+        await collection('loans').updateOne({ loan_id: loanId }, { $set: { remarks: updatedRemarks } });
 
         const staffName = req.session && req.session.user ? req.session.user.full_name : (req.body.staff_name || 'System');
-        logAudit('REMINDER_SENT', `Sent overdue notice to ${loan.full_name} (${loan.phone}) for "${loan.title}".`, staffName);
+        await logAudit(
+            'REMINDER_SENT',
+            `Sent overdue notice to ${member ? member.full_name : 'Unknown'} (${member ? member.phone : '-'}) for "${book ? book.title : 'Unknown'}".`,
+            staffName
+        );
 
         res.json({
             success: true,
-            message: `Overdue reminder notification successfully logged & sent to ${loan.full_name} (${loan.email}).`
+            message: `Overdue reminder notification successfully logged & sent to ${member ? member.full_name : 'Unknown'} (${member ? member.email : '-'}).`
         });
     } catch (err) {
         res.status(500).json({ success: false, message: 'Failed to send reminder: ' + err.message });
@@ -948,72 +1255,146 @@ router.post('/overdue/remind/:id', (req, res) => {
 });
 
 // CSV Export Endpoint for Reports
-router.get('/reports/export', (req, res) => {
+router.get('/reports/export', async (req, res) => {
     try {
-        const loans = db.prepare(`
-            SELECT l.loan_id, b.isbn, b.title, m.member_code, m.full_name, l.issue_date, l.due_date, l.return_date, l.status, l.fine_amount
-            FROM loans l
-            JOIN books b ON l.book_id = b.book_id
-            JOIN members m ON l.member_id = m.member_id
-            ORDER BY l.loan_id DESC
-        `).all();
+        const loanDocs = await collection('loans').find({}).sort({ loan_id: -1 }).toArray();
+        const loans = await hydrateLoans(loanDocs);
 
         let csv = 'LoanID,ISBN,BookTitle,MemberCode,MemberName,IssueDate,DueDate,ReturnDate,Status,FineAmount\n';
-        loans.forEach(row => {
-            csv += `"${row.loan_id}","${row.isbn}","${row.title.replace(/"/g, '""')}","${row.member_code}","${row.full_name.replace(/"/g, '""')}","${row.issue_date}","${row.due_date}","${row.return_date || ''}","${row.status}","${row.fine_amount}"\n`;
+        loans.forEach((row) => {
+            csv += `"${row.loan_id}","${row.isbn || ''}","${String(row.book_title || '').replace(/"/g, '""')}","${row.member_code || ''}","${String(row.member_name || '').replace(/"/g, '""')}","${row.issue_date || ''}","${row.due_date || ''}","${row.return_date || ''}","${row.status}","${row.fine_amount}"\n`;
         });
 
         res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', 'attachment; filename="campuslib_circulation_report.csv"');
+        res.setHeader('Content-Disposition', 'attachment; filename="krmu_library_circulation_report.csv"');
         res.send(csv);
     } catch (err) {
         res.status(500).json({ success: false, message: 'Failed to export CSV report' });
     }
 });
 
-router.get('/reports', (req, res) => {
+router.get('/reports', async (req, res) => {
     try {
-        const popularBooks = db.prepare(`
-            SELECT b.title, b.author, b.isbn, b.genre, COUNT(l.loan_id) as times_borrowed
-            FROM books b
-            LEFT JOIN loans l ON b.book_id = l.book_id
-            GROUP BY b.book_id
-            ORDER BY times_borrowed DESC
-            LIMIT 5
-        `).all();
+        const [borrowCounts, borrowerCounts, monthlyStats, inventoryAgg, finesAgg] = await Promise.all([
+            collection('loans').aggregate([
+                { $group: { _id: '$book_id', times_borrowed: { $sum: 1 } } },
+                { $sort: { times_borrowed: -1 } },
+                { $limit: 5 }
+            ]).toArray(),
+            collection('loans').aggregate([
+                { $group: { _id: '$member_id', total_borrowed: { $sum: 1 } } },
+                { $sort: { total_borrowed: -1 } },
+                { $limit: 5 }
+            ]).toArray(),
+            collection('loans').aggregate([
+                { $match: { issue_date: { $type: 'date' } } },
+                {
+                    $group: {
+                        _id: { $dateToString: { format: '%Y-%m', date: '$issue_date' } },
+                        issue_count: { $sum: 1 }
+                    }
+                },
+                { $sort: { _id: -1 } },
+                { $limit: 6 },
+                { $project: { _id: 0, month: '$_id', issue_count: 1 } }
+            ]).toArray(),
+            collection('books').aggregate([
+                {
+                    $group: {
+                        _id: null,
+                        total_titles: { $sum: 1 },
+                        total_volumes: { $sum: '$total_copies' },
+                        available_volumes: { $sum: '$available_copies' },
+                        circulating_volumes: { $sum: { $subtract: ['$total_copies', '$available_copies'] } }
+                    }
+                },
+                { $project: { _id: 0 } }
+            ]).toArray(),
+            collection('loans').aggregate([
+                {
+                    $group: {
+                        _id: null,
+                        fines_collected: {
+                            $sum: { $cond: [{ $eq: ['$fine_paid', 1] }, '$fine_amount', 0] }
+                        },
+                        fines_pending: {
+                            $sum: {
+                                $cond: [
+                                    { $and: [{ $eq: ['$return_date', null] }, { $eq: ['$status', 'Overdue'] }] },
+                                    '$fine_amount',
+                                    0
+                                ]
+                            }
+                        }
+                    }
+                },
+                { $project: { _id: 0 } }
+            ]).toArray()
+        ]);
 
-        const topBorrowers = db.prepare(`
-            SELECT m.member_code, m.full_name, m.membership_type, COUNT(l.loan_id) as total_borrowed
-            FROM members m
-            JOIN loans l ON m.member_id = l.member_id
-            GROUP BY m.member_id
-            ORDER BY total_borrowed DESC
-            LIMIT 5
-        `).all();
+        const borrowedBooks = borrowCounts.length
+            ? await collection('books').find({ book_id: { $in: borrowCounts.map((row) => row._id) } }).toArray()
+            : [];
+        const borrowedBookMap = new Map(borrowedBooks.map((b) => [b.book_id, b]));
 
-        const monthlyStats = db.prepare(`
-            SELECT strftime('%Y-%m', issue_date) as month, COUNT(*) as issue_count
-            FROM loans
-            GROUP BY month
-            ORDER BY month DESC
-            LIMIT 6
-        `).all();
+        const popularBooks = [];
+        for (const row of borrowCounts) {
+            const book = borrowedBookMap.get(row._id);
+            if (book) {
+                popularBooks.push({
+                    title: book.title,
+                    author: book.author,
+                    isbn: book.isbn,
+                    genre: book.genre,
+                    times_borrowed: row.times_borrowed
+                });
+            }
+        }
 
-        const inventory = db.prepare(`
-            SELECT 
-                COUNT(*) as total_titles,
-                SUM(total_copies) as total_volumes,
-                SUM(available_copies) as available_volumes,
-                SUM(total_copies - available_copies) as circulating_volumes
-            FROM books
-        `).get();
+        // If fewer than 5 books have ever circulated, fill with unused titles (LEFT JOIN semantics)
+        if (popularBooks.length < 5) {
+            const usedIds = borrowCounts.map((row) => row._id);
+            const idleBooks = await collection('books')
+                .find({ book_id: { $nin: usedIds } })
+                .sort({ title: 1 })
+                .limit(5 - popularBooks.length)
+                .toArray();
+            for (const book of idleBooks) {
+                popularBooks.push({
+                    title: book.title,
+                    author: book.author,
+                    isbn: book.isbn,
+                    genre: book.genre,
+                    times_borrowed: 0
+                });
+            }
+        }
 
-        const fines = db.prepare(`
-            SELECT 
-                COALESCE(SUM(CASE WHEN fine_paid = 1 THEN fine_amount ELSE 0 END), 0) as fines_collected,
-                COALESCE(SUM(CASE WHEN return_date IS NULL AND status = 'Overdue' THEN fine_amount ELSE 0 END), 0) as fines_pending
-            FROM loans
-        `).get();
+        const borrowerMembers = borrowerCounts.length
+            ? await collection('members').find({ member_id: { $in: borrowerCounts.map((row) => row._id) } }).toArray()
+            : [];
+        const borrowerMap = new Map(borrowerMembers.map((m) => [m.member_id, m]));
+
+        const topBorrowers = borrowerCounts
+            .map((row) => {
+                const member = borrowerMap.get(row._id);
+                if (!member) return null;
+                return {
+                    member_code: member.member_code,
+                    full_name: member.full_name,
+                    membership_type: member.membership_type,
+                    total_borrowed: row.total_borrowed
+                };
+            })
+            .filter(Boolean);
+
+        const inventory = inventoryAgg[0] || {
+            total_titles: 0,
+            total_volumes: 0,
+            available_volumes: 0,
+            circulating_volumes: 0
+        };
+        const fines = finesAgg[0] || { fines_collected: 0, fines_pending: 0 };
 
         res.json({
             success: true,
@@ -1024,55 +1405,45 @@ router.get('/reports', (req, res) => {
             fines
         });
     } catch (err) {
+        console.error('Reports error:', err);
         res.status(500).json({ success: false, message: 'Failed to generate library reports' });
     }
 });
 
 // Staff accounts list
-router.get('/staff', (req, res) => {
+router.get('/staff', async (req, res) => {
     try {
-        const staffList = db.prepare(`
-            SELECT staff_id, staff_code, full_name, email, phone, role, hire_date, status
-            FROM staff
-            ORDER BY staff_id ASC
-        `).all();
-        res.json({ success: true, staff: staffList });
+        const staffList = await collection('staffs')
+            .find(
+                {},
+                { projection: { staff_id: 1, staff_code: 1, full_name: 1, email: 1, phone: 1, role: 1, hire_date: 1, status: 1 } }
+            )
+            .sort({ staff_id: 1 })
+            .toArray();
+
+        res.json({
+            success: true,
+            staff: staffList.map((s) => ({
+                ...publicDoc(s),
+                hire_date: toDateOnly(s.hire_date)
+            }))
+        });
     } catch (err) {
         res.status(500).json({ success: false, message: 'Failed to fetch staff accounts' });
     }
 });
 
 // Pristine Demo Reset
-router.post('/system/reset-demo-data', (req, res) => {
+router.post('/system/reset-demo-data', async (req, res) => {
     try {
-        const fs = require('node:fs');
-        const path = require('node:path');
-        const SEEDS_PATH = path.join(__dirname, '..', 'database', 'seeds.sql');
+        await resetDemoData();
 
-        db.exec('PRAGMA foreign_keys = OFF;');
-        try {
-            runTransaction((tx) => {
-                tx.exec('DELETE FROM audit_logs;');
-                tx.exec('DELETE FROM reservations;');
-                tx.exec('DELETE FROM loans;');
-                tx.exec('DELETE FROM members;');
-                tx.exec('DELETE FROM books;');
-                tx.exec('DELETE FROM staff;');
-                tx.exec('DELETE FROM sqlite_sequence;');
-
-                const seedsSql = fs.readFileSync(SEEDS_PATH, 'utf-8');
-                tx.exec(seedsSql);
-            });
-        } finally {
-            db.exec('PRAGMA foreign_keys = ON;');
-        }
-
-        updateOverdueLoans();
         const staffName = req.session && req.session.user ? req.session.user.full_name : 'Admin';
-        logAudit('SYSTEM_RESET', 'Demo database records restored to pristine initial state.', staffName);
+        await logAudit('SYSTEM_RESET', 'Demo database records restored to pristine initial state.', staffName);
 
         res.json({ success: true, message: 'Library database successfully restored to fresh demo state.' });
     } catch (err) {
+        console.error('Reset error:', err);
         res.status(500).json({ success: false, message: 'Failed to reset demo data: ' + err.message });
     }
 });

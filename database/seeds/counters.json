@@ -1,0 +1,26 @@
+[
+  {
+    "_id": "staff",
+    "seq": 3
+  },
+  {
+    "_id": "book",
+    "seq": 14109
+  },
+  {
+    "_id": "member",
+    "seq": 7
+  },
+  {
+    "_id": "loan",
+    "seq": 8
+  },
+  {
+    "_id": "reservation",
+    "seq": 2
+  },
+  {
+    "_id": "audit_log",
+    "seq": 4
+  }
+]

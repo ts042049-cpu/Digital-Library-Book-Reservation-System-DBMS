@@ -1,8 +1,3 @@
-/**
- * Authentication and Role-Based Authorization Middleware
- * Uses Express Session with credentials: "include"
- */
-
 function requireAuth(req, res, next) {
     if (req.session && req.session.user) {
         req.user = req.session.user;

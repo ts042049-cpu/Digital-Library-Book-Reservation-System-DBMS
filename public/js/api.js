@@ -1,10 +1,3 @@
-/**
- * CampusLib LMS — Reusable API Service Layer
- * Centralizes all HTTP communication with backend API
- * Handles relative routing on HTTP, fallback auto-detection on file:// protocol,
- * JSON serialization, session credentials, headers, and friendly error normalization.
- */
-
 const ApiService = {
     // When served over HTTP/HTTPS, relative URL '' works automatically on ANY port (5000, 3000, etc.)
     baseUrl: (typeof window !== 'undefined' && window.location.protocol.startsWith('http'))
@@ -69,6 +62,11 @@ const ApiService = {
         }
 
         if (!response.ok) {
+            // Let the app shell know when a session is no longer valid
+            if (response.status === 401 && typeof window !== 'undefined' && !url.includes('/api/auth/login')) {
+                window.dispatchEvent(new CustomEvent('auth:required'));
+            }
+
             const errorMessage = (data && data.message) 
                 ? data.message 
                 : `Request failed with HTTP status ${response.status}`;

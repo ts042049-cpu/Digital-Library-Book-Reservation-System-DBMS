@@ -1,16 +1,17 @@
 {
-  "name": "library-management-system",
+  "name": "krmu-library",
   "version": "1.0.0",
-  "description": "A practical, full-featured Library Management System built for College DBMS Course and Viva Demonstration",
+  "description": "KRMU Library - A practical, full-featured Library Management System for K.R. Mangalam University, built for College DBMS Course and Viva Demonstration",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js"
   },
   "keywords": [
-    "library-management-system",
+    "krmu-library",
     "dbms",
-    "sqlite",
+    "mongodb",
+    "nosql",
     "express",
     "student-project"
   ],
@@ -23,6 +24,6 @@
     "dotenv": "^18.0.8",
     "express": "^4.21.2",
     "express-session": "^1.19.0",
-    "mysql2": "^3.24.6"
+    "mongodb": "^7.7.0"
   }
 }

@@ -80,9 +80,12 @@ setTimeout(async () => {
         console.log('3.1 Create book status:', newBookRes.status, 'Message:', newBookRes.body.message);
         const createdBookId = newBookRes.body.bookId;
 
-        // Verify book in list
-        const booksList = await request('GET', '/api/books?search=Modern%20Operating', null, sessionCookie);
+        // Verify book in list (raw space — request() applies encodeURI once)
+        const booksList = await request('GET', '/api/books?search=Modern Operating', null, sessionCookie);
         console.log('3.2 Search created book count:', booksList.body.count);
+        if (!booksList.body.count || booksList.body.count < 1) {
+            throw new Error('Book search did not find the newly created title!');
+        }
 
         // Edit book
         const editBookRes = await request('PUT', '/api/books/' + createdBookId, {
