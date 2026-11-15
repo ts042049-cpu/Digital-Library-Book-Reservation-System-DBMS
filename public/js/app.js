@@ -22,33 +22,17 @@ const App = {
      * Initialize Application on DOM Ready
      */
     async init() {
-        // 1. Mandatory Session Guard: Home page requires prior authentication
-        const isAuthenticated = await this.checkCurrentSession();
-        if (!isAuthenticated) {
-            return; // Halt all operations, redirecting to login.html
-        }
-
         this.setupNavigation();
         this.setupEventListeners();
         this.updateDateDisplay();
 
-<<<<<<< HEAD
-        // 1. Check current authenticated session via GET /api/auth/me
+        // Show the dashboard for an active session, otherwise the login gate.
         const isAuthenticated = await this.checkCurrentSession();
-
-        // 2. Show the login gate until a staff session is confirmed
         if (isAuthenticated) {
             this.showApp();
         } else {
             this.showLoginGate();
         }
-=======
-        // 2. Load initial dashboard data
-        this.navigate('dashboard');
-
-        // 3. Load staff accounts for role switcher / profile demo
-        this.loadStaffList();
->>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
     },
 
     /**
@@ -61,15 +45,11 @@ const App = {
                 this.setCurrentUser(data.user);
                 return true;
             }
-            // Not authenticated: home page is locked -> go to login page
-            window.location.replace('login.html');
             return false;
         } catch (err) {
-            console.warn('[Session] Session check failed, redirecting to login:', err.message);
-            window.location.replace('login.html');
+            console.warn('[Session] Session check failed:', err.message);
             return false;
         }
-        return false;
     },
 
     /**
@@ -364,6 +344,20 @@ const App = {
                 document.getElementById('book-form-id').value = '';
                 document.getElementById('modal-book-title').textContent = 'Add New Book to Catalog';
                 this.openModal('modal-book');
+            });
+        }
+
+        // CSV bulk import trigger
+        const btnImportBooks = document.getElementById('btn-import-books');
+        const booksCsvInput = document.getElementById('books-csv-input');
+        if (btnImportBooks && booksCsvInput) {
+            btnImportBooks.addEventListener('click', () => {
+                booksCsvInput.value = '';
+                booksCsvInput.click();
+            });
+            booksCsvInput.addEventListener('change', (e) => {
+                const file = e.target.files && e.target.files[0];
+                if (file) this.handleImportBooks(file);
             });
         }
 
@@ -783,6 +777,53 @@ const App = {
         }
     },
 
+    readFileAsText(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result || ''));
+            reader.onerror = () => reject(new Error('Could not read the selected CSV file.'));
+            reader.readAsText(file);
+        });
+    },
+
+    async handleImportBooks(file) {
+        const btn = document.getElementById('btn-import-books');
+        const originalBtnHtml = btn ? btn.innerHTML : '';
+
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<span>Importing…</span>';
+        }
+
+        try {
+            if (!/\.csv$/i.test(file.name) && file.type !== 'text/csv') {
+                throw new Error('Please choose a .csv file.');
+            }
+            if (file.size > 5 * 1024 * 1024) {
+                throw new Error('CSV file is too large (maximum 5 MB).');
+            }
+
+            const csv = await this.readFileAsText(file);
+            if (!csv.trim()) throw new Error('The selected CSV file is empty.');
+
+            const data = await ApiService.books.importCsv(csv, file.name, this.state.currentUser.full_name);
+            if (!data.success) throw new Error(data.message);
+
+            this.showToast(data.message, data.imported > 0 ? 'success' : 'info');
+            if (data.errors && data.errors.length) {
+                console.warn('[Book Import] Rejected rows:', data.errors);
+            }
+            this.loadBooks({ resetPage: true });
+        } catch (err) {
+            this.showToast(err.message, 'error');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalBtnHtml;
+            }
+        }
+    },
+
     async deleteBook(bookId) {
         const book = this.state.books.find(b => b.book_id === parseInt(bookId, 10));
         const title = book ? book.title : 'this book';
@@ -1172,14 +1213,10 @@ const App = {
 
     async handleIssueBook(e) {
         e.preventDefault();
-<<<<<<< HEAD
-        const bookId = document.getElementById('issue-book-id').value;
-=======
         const submitBtn = e.target.querySelector('button[type="submit"]');
         const originalBtnText = submitBtn ? submitBtn.innerHTML : '';
 
-        const bookId = document.getElementById('issue-book-select').value;
->>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
+        const bookId = document.getElementById('issue-book-id').value;
         const memberId = document.getElementById('issue-member-select').value;
         const loanDays = document.getElementById('issue-days-select').value;
         const remarks = document.getElementById('issue-remarks-input').value.trim();
@@ -1641,24 +1678,9 @@ const App = {
     async handleLogout() {
         try {
             const data = await ApiService.auth.logout();
-<<<<<<< HEAD
             this.closeModal('modal-auth');
             this.showLoginGate();
             this.showToast(data.message || 'Logged out successfully', 'info');
-=======
-            this.showToast(data.message || 'Logged out successfully. Redirecting to login...', 'info');
-            this.setCurrentUser({
-                staff_id: 0,
-                staff_code: 'GUEST',
-                full_name: 'Guest Librarian',
-                email: 'guest@library.edu',
-                role: 'Assistant'
-            });
-            this.closeModal('modal-auth');
-            setTimeout(() => {
-                window.location.href = 'login.html';
-            }, 600);
->>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
         } catch (err) {
             this.showToast(err.message, 'error');
         }

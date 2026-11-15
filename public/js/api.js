@@ -166,6 +166,9 @@ const ApiService = {
         },
         delete(id, staffName = 'Admin') {
             return ApiService.delete(`/api/books/${id}`, { staff_name: staffName });
+        },
+        importCsv(csv, fileName = 'books.csv', staffName = 'Admin') {
+            return ApiService.post('/api/books/import', { csv, file_name: fileName, staff_name: staffName });
         }
     },
 

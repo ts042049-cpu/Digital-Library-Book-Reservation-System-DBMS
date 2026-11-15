@@ -397,46 +397,10 @@ body.is-locked {
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-<<<<<<< HEAD
 .brand-logo {
     width: 46px;
     height: 46px;
     flex-shrink: 0;
-=======
-.brand-logo-container {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    padding: 2px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35), 0 0 0 2px rgba(255, 255, 255, 0.2);
-    overflow: hidden;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.brand-logo-container:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), 0 0 0 2px var(--primary-500);
-}
-
-.brand-logo-img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    display: block;
-}
-
-.brand-icon {
-    width: 36px;
-    height: 36px;
-    background-color: var(--accent-600);
-    color: #fff;
-    border-radius: var(--radius-md);
->>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
     display: flex;
     align-items: center;
     justify-content: center;
@@ -470,11 +434,7 @@ body.is-locked {
 }
 
 .brand-text span {
-<<<<<<< HEAD
     font-size: 0.7rem;
-=======
-    font-size: 0.72rem;
->>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
     color: #94a3b8;
     display: block;
     white-space: nowrap;

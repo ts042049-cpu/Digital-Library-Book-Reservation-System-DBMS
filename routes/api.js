@@ -14,6 +14,7 @@ const bcrypt = require('bcryptjs');
 const {
     getDb,
     nextSequence,
+    nextSequenceRange,
     logAudit,
     refreshOverdueLoans,
     resetDemoData,
@@ -58,6 +59,110 @@ async function staffMapFor(ids) {
     if (!unique.length) return new Map();
     const docs = await collection('staffs').find({ staff_id: { $in: unique } }).toArray();
     return new Map(docs.map((doc) => [doc.staff_id, doc]));
+}
+
+// ====================================================================
+// CSV IMPORT HELPERS
+// ====================================================================
+const BOOK_CSV_COLUMNS = {
+    isbn: ['isbn', 'isbn_13', 'isbn13', 'isbn_10', 'isbn10'],
+    title: ['title', 'book_title', 'book_name', 'name'],
+    author: ['author', 'authors', 'author_name', 'authored_by'],
+    publisher: ['publisher', 'publication', 'publisher_name'],
+    publication_year: ['publication_year', 'published_year', 'pub_year', 'year'],
+    genre: ['genre', 'category', 'subject', 'department'],
+    total_copies: ['total_copies', 'copies', 'quantity', 'qty', 'no_of_copies', 'num_copies'],
+    shelf_location: ['shelf_location', 'shelf', 'shelf_code', 'shelf_no', 'location', 'call_number']
+};
+
+function normalizeCsvHeader(value) {
+    return String(value || '')
+        .replace(/^\uFEFF/, '')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '_')
+        .replace(/^_+|_+$/g, '');
+}
+
+function detectCsvDelimiter(text) {
+    const firstLine = String(text).split(/\r?\n/, 1)[0] || '';
+    const candidates = [',', ';', '\t'];
+    let best = ',';
+    let bestCount = -1;
+
+    for (const candidate of candidates) {
+        let count = 0;
+        let inQuotes = false;
+        for (const char of firstLine) {
+            if (char === '"') inQuotes = !inQuotes;
+            else if (!inQuotes && char === candidate) count += 1;
+        }
+        if (count > bestCount) {
+            best = candidate;
+            bestCount = count;
+        }
+    }
+    return best;
+}
+
+/** RFC 4180-style parser: handles quoted fields, escaped quotes and CRLF. */
+function parseCsvRows(text, delimiter = ',') {
+    const rows = [];
+    const source = String(text).replace(/^\uFEFF/, '');
+    let row = [];
+    let field = '';
+    let inQuotes = false;
+
+    for (let i = 0; i < source.length; i += 1) {
+        const char = source[i];
+
+        if (inQuotes) {
+            if (char === '"') {
+                if (source[i + 1] === '"') {
+                    field += '"';
+                    i += 1;
+                } else {
+                    inQuotes = false;
+                }
+            } else {
+                field += char;
+            }
+            continue;
+        }
+
+        if (char === '"') {
+            inQuotes = true;
+        } else if (char === delimiter) {
+            row.push(field);
+            field = '';
+        } else if (char === '\n') {
+            row.push(field);
+            rows.push(row);
+            row = [];
+            field = '';
+        } else if (char === '\r') {
+            // Ignore CR; the following LF ends the row.
+        } else {
+            field += char;
+        }
+    }
+
+    if (field.length || row.length) {
+        row.push(field);
+        rows.push(row);
+    }
+
+    return rows;
+}
+
+function mapCsvColumns(headers) {
+    const normalized = headers.map(normalizeCsvHeader);
+    const mapping = {};
+    for (const [field, aliases] of Object.entries(BOOK_CSV_COLUMNS)) {
+        const index = normalized.findIndex((header) => aliases.includes(header));
+        if (index !== -1) mapping[field] = index;
+    }
+    return mapping;
 }
 
 /**
@@ -189,7 +294,6 @@ router.get('/auth/me', async (req, res) => {
             user: req.session.user
         });
     }
-<<<<<<< HEAD
 
     try {
         const defaultStaff = await collection('staffs').findOne(
@@ -211,13 +315,6 @@ router.get('/auth/me', async (req, res) => {
     } catch (err) {
         res.status(500).json({ success: false, message: 'Failed to load staff session.' });
     }
-=======
-    res.json({
-        success: true,
-        authenticated: false,
-        user: null
-    });
->>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
 });
 
 // POST /api/auth/logout
@@ -495,6 +592,159 @@ router.get('/books/:id', async (req, res) => {
     }
 });
 
+// POST /api/books/import — bulk-create catalog titles from CSV text.
+// Required columns: ISBN, Title, Author. Optional: Publisher, Year,
+// Genre/Category, Total Copies (default 1), Shelf Location.
+router.post('/books/import', async (req, res) => {
+    try {
+        const csv = typeof req.body?.csv === 'string' ? req.body.csv : '';
+        if (!csv.trim()) {
+            return res.status(400).json({
+                success: false,
+                message: 'CSV content is empty. Upload a .csv file with at least ISBN, Title and Author columns.'
+            });
+        }
+
+        const delimiter = detectCsvDelimiter(csv);
+        const rows = parseCsvRows(csv, delimiter).filter((row) => row.some((cell) => String(cell).trim() !== ''));
+
+        if (rows.length < 2) {
+            return res.status(400).json({
+                success: false,
+                message: 'CSV must contain a header row and at least one data row.'
+            });
+        }
+
+        const columns = mapCsvColumns(rows[0]);
+        const missing = ['isbn', 'title', 'author'].filter((field) => columns[field] === undefined);
+        if (missing.length) {
+            return res.status(400).json({
+                success: false,
+                message: `CSV is missing required column${missing.length > 1 ? 's' : ''}: ${missing.join(', ')}. Accepted headers include ISBN, Title, Author, Publisher, Year, Genre/Category, Copies and Shelf.`
+            });
+        }
+
+        const errors = [];
+        const candidates = [];
+        const seenIsbns = new Set();
+        let skipped = 0;
+
+        for (let r = 1; r < rows.length; r += 1) {
+            const cells = rows[r];
+            const value = (field) => {
+                const index = columns[field];
+                return index === undefined ? '' : String(cells[index] ?? '').trim();
+            };
+
+            const isbn = value('isbn');
+            const title = value('title');
+            const author = value('author');
+            const line = r + 1;
+
+            if (!isbn || !title || !author) {
+                errors.push({ line, message: 'ISBN, Title and Author are all required.' });
+                continue;
+            }
+
+            const isbnKey = isbn.toLowerCase();
+            if (seenIsbns.has(isbnKey)) {
+                errors.push({ line, message: `Duplicate ISBN "${isbn}" within the CSV.` });
+                continue;
+            }
+            seenIsbns.add(isbnKey);
+
+            const copiesRaw = value('total_copies');
+            const copies = copiesRaw === '' ? 1 : parseInt(copiesRaw, 10);
+            if (!Number.isInteger(copies) || copies <= 0) {
+                errors.push({ line, message: `Total copies must be a positive integer (received "${copiesRaw}").` });
+                continue;
+            }
+
+            const yearRaw = value('publication_year');
+            const parsedYear = yearRaw === '' ? null : parseInt(yearRaw, 10);
+
+            candidates.push({
+                line,
+                isbn,
+                title,
+                author,
+                publisher: value('publisher') || null,
+                publication_year: Number.isFinite(parsedYear) ? parsedYear : null,
+                genre: value('genre') || 'General',
+                total_copies: copies,
+                shelf_location: value('shelf_location') || 'Section A'
+            });
+        }
+
+        // Skip any ISBN that already exists in the catalog (single query).
+        let toInsert = candidates;
+        if (candidates.length) {
+            const existing = await collection('books')
+                .find({ isbn: { $in: candidates.map((book) => book.isbn) } }, { projection: { isbn: 1 } })
+                .toArray();
+            const existingIsbns = new Set(existing.map((book) => String(book.isbn).toLowerCase()));
+
+            toInsert = candidates.filter((book) => {
+                if (existingIsbns.has(book.isbn.toLowerCase())) {
+                    skipped += 1;
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        let imported = 0;
+        if (toInsert.length) {
+            const firstId = await nextSequenceRange('book', toInsert.length);
+            const now = new Date();
+            const docs = toInsert.map((book, index) => {
+                const { line, ...rest } = book;
+                return {
+                    book_id: firstId + index,
+                    ...rest,
+                    available_copies: book.total_copies,
+                    cover_color: '#1e3a8a',
+                    created_at: now
+                };
+            });
+
+            try {
+                const result = await collection('books').insertMany(docs, { ordered: false });
+                imported = result.insertedCount;
+            } catch (insertErr) {
+                if (!insertErr.writeErrors) throw insertErr;
+                // Some rows raced with another import: report what got in.
+                imported = insertErr.result?.nInserted ?? (docs.length - insertErr.writeErrors.length);
+            }
+        }
+
+        const staffName = req.session && req.session.user ? req.session.user.full_name : (req.body.staff_name || 'Admin');
+        const fileName = req.body.file_name ? ` from "${req.body.file_name}"` : '';
+        await logAudit(
+            'BOOK_IMPORT',
+            `Imported ${imported} book title(s)${fileName} (${skipped} duplicate ISBN(s) skipped, ${errors.length} row(s) rejected).`,
+            staffName
+        );
+
+        const parts = [`Imported ${imported} book title${imported === 1 ? '' : 's'}`];
+        if (skipped) parts.push(`${skipped} duplicate ISBN${skipped === 1 ? '' : 's'} skipped`);
+        if (errors.length) parts.push(`${errors.length} row${errors.length === 1 ? '' : 's'} rejected`);
+
+        res.json({
+            success: true,
+            message: `${parts.join('; ')}.`,
+            imported,
+            skipped,
+            failed: errors.length,
+            totalRows: rows.length - 1,
+            errors: errors.slice(0, 50)
+        });
+    } catch (err) {
+        console.error('Book CSV import error:', err);
+        res.status(500).json({ success: false, message: 'Failed to import books: ' + err.message });
+    }
+});
+
 router.post('/books', async (req, res) => {
     try {
         const { isbn, title, author, publisher, publication_year, genre, total_copies, shelf_location } = req.body;
@@ -582,7 +832,6 @@ router.put('/books/:id', async (req, res) => {
 
         const copyDifference = newTotalCopies - currentBook.total_copies;
 
-<<<<<<< HEAD
         await collection('books').updateOne(
             { book_id: bookId },
             {
@@ -598,26 +847,6 @@ router.put('/books/:id', async (req, res) => {
                     shelf_location: shelf_location ? shelf_location.trim() : currentBook.shelf_location
                 }
             }
-=======
-        const stmt = db.prepare(`
-            UPDATE books
-            SET isbn = ?, title = ?, author = ?, publisher = ?, publication_year = ?,
-                genre = ?, total_copies = ?, available_copies = ?, shelf_location = ?
-            WHERE book_id = ?
-        `);
-
-        stmt.run(
-            isbn ? isbn.trim() : currentBook.isbn,
-            title ? title.trim() : currentBook.title,
-            author ? author.trim() : currentBook.author,
-            publisher !== undefined ? publisher : currentBook.publisher,
-            publication_year !== undefined ? (!isNaN(parseInt(publication_year, 10)) ? parseInt(publication_year, 10) : null) : currentBook.publication_year,
-            genre ? genre.trim() : currentBook.genre,
-            newTotalCopies,
-            newAvailableCopies,
-            shelf_location ? shelf_location.trim() : currentBook.shelf_location,
-            bookId
->>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
         );
 
         const staffName = req.session && req.session.user ? req.session.user.full_name : (req.body.staff_name || 'Admin');
@@ -784,22 +1013,8 @@ router.post('/members', async (req, res) => {
         }
 
         const currentYear = new Date().getFullYear();
-<<<<<<< HEAD
         const member_id = await nextSequence('member');
         const memberCode = `MEM-${currentYear}-${String(member_id).padStart(3, '0')}`;
-=======
-        let seq = 1;
-        const lastMember = db.prepare('SELECT member_id FROM members ORDER BY member_id DESC LIMIT 1').get();
-        if (lastMember) {
-            seq = lastMember.member_id + 1;
-        }
-        let memberCode = `MEM-${currentYear}-${String(seq).padStart(3, '0')}`;
-        while (db.prepare('SELECT member_id FROM members WHERE member_code = ?').get(memberCode)) {
-            seq++;
-            memberCode = `MEM-${currentYear}-${String(seq).padStart(3, '0')}`;
-        }
-
->>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
         const limit = max_borrow_limit ? parseInt(max_borrow_limit, 10) : (membership_type === 'Faculty' ? 8 : 4);
 
         await collection('members').insertOne({
@@ -851,7 +1066,6 @@ router.put('/members/:id', async (req, res) => {
             }
         }
 
-<<<<<<< HEAD
         await collection('members').updateOne(
             { member_id: memberId },
             {
@@ -865,23 +1079,6 @@ router.put('/members/:id', async (req, res) => {
                     max_borrow_limit: max_borrow_limit ? parseInt(max_borrow_limit, 10) : currentMember.max_borrow_limit
                 }
             }
-=======
-        const stmt = db.prepare(`
-            UPDATE members
-            SET full_name = ?, email = ?, phone = ?, address = ?, membership_type = ?, status = ?, max_borrow_limit = ?
-            WHERE member_id = ?
-        `);
-
-        stmt.run(
-            full_name ? full_name.trim() : currentMember.full_name,
-            email ? email.trim().toLowerCase() : currentMember.email,
-            phone ? phone.trim() : currentMember.phone,
-            address !== undefined ? address.trim() : currentMember.address,
-            membership_type || currentMember.membership_type,
-            status || currentMember.status,
-            max_borrow_limit ? (!isNaN(parseInt(max_borrow_limit, 10)) ? parseInt(max_borrow_limit, 10) : currentMember.max_borrow_limit) : currentMember.max_borrow_limit,
-            memberId
->>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
         );
 
         const staffName = req.session && req.session.user ? req.session.user.full_name : (req.body.staff_name || 'Admin');
@@ -1039,23 +1236,11 @@ router.post('/loans/issue', async (req, res) => {
         const today = startOfDayUTC(new Date());
         const issueDate = toDateOnly(today);
         let finalDueDate;
-<<<<<<< HEAD
         if (due_date && /^\d{4}-\d{2}-\d{2}$/.test(due_date)) {
             finalDueDate = due_date;
         } else {
             const days = parseInt(loan_days, 10) || 14;
             finalDueDate = toDateOnly(addDays(today, days));
-=======
-        if (due_date && due_date.match(/^\d{4}-\d{2}-\d{2}$/)) {
-            if (due_date < issueDate) {
-                return res.status(400).json({ success: false, message: 'Due date cannot be earlier than today.' });
-            }
-            finalDueDate = due_date;
-        } else {
-            const days = Math.max(1, parseInt(loan_days, 10) || 14);
-            const dueDateObj = new Date(today.getTime() + days * 24 * 60 * 60 * 1000);
-            finalDueDate = dueDateObj.toISOString().split('T')[0];
->>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
         }
 
         const requestedStaffId = req.session && req.session.user ? req.session.user.staff_id : req.body.staff_id;
@@ -1203,16 +1388,10 @@ router.post('/loans/:id/renew', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Cannot renew a book that has already been returned.' });
         }
 
-<<<<<<< HEAD
         const [book, member] = await Promise.all([
             collection('books').findOne({ book_id: loan.book_id }),
             collection('members').findOne({ member_id: loan.member_id })
         ]);
-=======
-        const baseDate = new Date(loan.due_date) > new Date() ? new Date(loan.due_date) : new Date();
-        const days = Math.max(1, parseInt(additional_days, 10) || 14);
-        const newDue = new Date(baseDate.getTime() + days * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
->>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
 
         const now = startOfDayUTC(new Date());
         const dueDate = toDate(loan.due_date);

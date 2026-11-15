@@ -22,8 +22,8 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-// Body and Cookie Parsers
-app.use(express.json());
+// Body and Cookie Parsers (generous JSON limit for CSV bulk imports)
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
@@ -63,38 +63,29 @@ app.all('/api/*', (req, res) => {
     });
 });
 
-// Dedicated public page routes for Login and Terms/Policy
+// Login and Terms/Policy share the same public entry point.
+// The app shell contains the circulation-desk login gate, so /login serves
+// index.html too — giving a single, consistent login screen everywhere.
 app.get(['/login', '/login.html'], (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.get(['/terms', '/terms.html', '/policy', '/policies', '/terms-and-policy', '/privacy'], (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'terms.html'));
 });
 
-// Authentication Guard: ONLY authenticated users can access the home page/dashboard
-function requireHomeSession(req, res, next) {
-    if (req.session && req.session.user) {
-        return next();
-    }
-    // Any unauthenticated attempt to open the home page is redirected strictly to /login
-    return res.redirect('/login');
-}
-
-// Protected Home Page routes (must be authenticated via login to access)
-app.get(['/', '/index.html', '/dashboard', '/home'], requireHomeSession, (req, res) => {
+// The app shell is always served. When there is no staff session the shell's
+// built-in login gate is displayed; every data endpoint stays auth-protected.
+app.get(['/', '/index.html', '/dashboard', '/home'], (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Static frontend assets (styles, scripts, images) - index: false ensures index.html cannot bypass auth
+// Static frontend assets (styles, scripts, images)
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
-// Fallback for client-side navigation: protect home page
+// Fallback for client-side navigation: always hand back the app shell.
 app.use((req, res) => {
-    if (req.session && req.session.user) {
-        return res.sendFile(path.join(__dirname, 'public', 'index.html'));
-    }
-    return res.redirect('/login');
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 // Centralized Error handling middleware
@@ -107,45 +98,25 @@ app.use((err, req, res, next) => {
     });
 });
 
-<<<<<<< HEAD
-// Start the HTTP listeners only after MongoDB is reachable & seeded.
-async function start() {
-    try {
-        await connect();
-    } catch (err) {
-        console.error('================================================================');
-        console.error('   STARTUP ABORTED: MongoDB is not reachable.');
-        console.error(`   URI: ${process.env.MONGO_URI || 'mongodb://127.0.0.1:27017'}`);
-        console.error('   Start the "MongoDB" Windows service (or run mongod) and retry.');
-        console.error('================================================================');
-        process.exit(1);
-    }
-
-    // Start Primary Server (Port 5000)
-    const primaryServer = app.listen(PRIMARY_PORT, () => {
-        console.log('================================================================');
-        console.log(`   KRMU LIBRARY - K.R. MANGALAM UNIVERSITY`);
-=======
 let primaryServer = null;
 let secondaryServer = null;
 
-function startServers() {
-    if (primaryServer) return;
+// Start the HTTP listeners only after MongoDB is reachable & seeded.
+async function startServers() {
+    if (primaryServer) return primaryServer;
 
+    await connect();
+
+    // Start Primary Server (Port 5000)
     primaryServer = app.listen(PRIMARY_PORT, () => {
         console.log('================================================================');
-        console.log(`   CAMPUSLIB - ACADEMIC LIBRARY MANAGEMENT SYSTEM`);
->>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
+        console.log('   KRMU LIBRARY - K.R. MANGALAM UNIVERSITY');
         console.log(`   Primary Server Running At:   http://localhost:${PRIMARY_PORT}`);
         if (PRIMARY_PORT !== SECONDARY_PORT) {
             console.log(`   Secondary Server Running At: http://localhost:${SECONDARY_PORT}`);
         }
-<<<<<<< HEAD
         console.log(`   Active Database Engine:      MongoDB (database: ${MONGO_DB_NAME})`);
-=======
-        console.log(`   Active Database Engine:      SQLite (with MySQL 8.0 support)`);
->>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
-        console.log(`   Session Authentication:      Enabled (credentials: include)`);
+        console.log('   Session Authentication:      Enabled (credentials: include)');
         console.log('================================================================');
     });
 
@@ -159,11 +130,7 @@ function startServers() {
 
     if (PRIMARY_PORT !== SECONDARY_PORT) {
         try {
-<<<<<<< HEAD
-            const secondaryServer = app.listen(SECONDARY_PORT, () => {
-=======
             secondaryServer = app.listen(SECONDARY_PORT, () => {
->>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
                 console.log(`[DualPort] Secondary server active on http://localhost:${SECONDARY_PORT}`);
             });
             secondaryServer.on('error', (err) => {
@@ -173,13 +140,10 @@ function startServers() {
             });
         } catch (e) {}
     }
+
+    return primaryServer;
 }
 
-<<<<<<< HEAD
-start();
-
-// Error & signal handlers to keep server robust
-=======
 function stopServers() {
     if (primaryServer) {
         primaryServer.close();
@@ -191,22 +155,29 @@ function stopServers() {
     }
 }
 
+function handleStartupFailure() {
+    console.error('================================================================');
+    console.error('   STARTUP ABORTED: MongoDB is not reachable.');
+    console.error(`   URI: ${process.env.MONGO_URI || 'mongodb://127.0.0.1:27017'}`);
+    console.error('   Start the "MongoDB" Windows service (or run mongod) and retry.');
+    console.error('================================================================');
+    process.exit(1);
+}
+
 // Auto-start when executed directly as main script
 if (require.main === module) {
-    startServers();
+    startServers().catch(handleStartupFailure);
 }
 
 function gracefulShutdown(signal) {
     console.log(`[Server] Received ${signal}. Closing active listeners...`);
     stopServers();
-    process.exit(0);
+    close().finally(() => process.exit(0));
 }
 
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 
-// Error handlers for unhandled rejections
->>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
 process.on('uncaughtException', (err) => {
     console.error('[Uncaught Exception]:', err);
 });
@@ -215,28 +186,9 @@ process.on('unhandledRejection', (reason, promise) => {
     console.error('[Unhandled Rejection]:', reason);
 });
 
-<<<<<<< HEAD
-process.on('SIGINT', async () => {
-    console.log('[Server] Received SIGINT (ignored to keep daemon alive)');
-});
-
-process.on('SIGTERM', async () => {
-    console.log('[Server] Received SIGTERM (ignored to keep daemon alive)');
-});
-
-process.on('SIGBREAK', () => {
-    console.log('[Server] Received SIGBREAK (ignored to keep daemon alive)');
-});
-
-// Resume stdin to keep event loop active under background task runners
-if (process.stdin.isTTY) {
-    process.stdin.resume();
-}
-=======
 // Attach helper methods to app export for testing and programmatic usage
 app.startServers = startServers;
 app.stopServers = stopServers;
->>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
 
 module.exports = app;
 module.exports.closeDatabase = close;

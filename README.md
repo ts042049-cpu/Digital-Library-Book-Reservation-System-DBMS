@@ -65,6 +65,7 @@ The catalog is pre-loaded from the K.R. Mangalam University Central Library acce
 | **Books** | `GET` | `/api/books` | Search & filter books (by genre, availability, keyword) | Staff |
 | **Books** | `GET` | `/api/books/:id` | Book details plus currently active loans | Staff |
 | **Books** | `POST` | `/api/books` | Add new catalog title with copy counts & shelf code | Staff / Admin |
+| **Books** | `POST` | `/api/books/import` | Bulk-import titles from CSV text (`{ csv, file_name }`) | Staff / Admin |
 | **Books** | `PUT` | `/api/books/:id` | Update metadata & copies (validates against issued) | Staff / Admin |
 | **Books** | `DELETE` | `/api/books/:id` | Delete book (blocked if copies are currently borrowed) | Admin Only |
 | **Members** | `GET` | `/api/members` | Search members, filter by status and type | Staff |
@@ -90,6 +91,20 @@ The catalog is pre-loaded from the K.R. Mangalam University Central Library acce
 size 25, maximum 1000). The Issue Desk requests up to **300 titles** per search
 so a large slice of the 14,109-title catalog is browsable, and shows a
 “Showing N of M matching titles” hint.
+
+### Bulk book import (CSV)
+
+On **Book Catalog Management**, click **Import CSV** and choose a `.csv` file.
+Required columns are `ISBN`, `Title` and `Author`; optional columns are
+`Publisher`, `Year` (or `Publication Year`), `Genre` (or `Category`),
+`Copies` (or `Total Copies`, default `1`) and `Shelf` (or `Shelf Location`,
+default `Section A`). Header names are case-insensitive and `,` `;` or tab
+delimiters are auto-detected.
+
+Rows with missing required fields or invalid copy counts are rejected and
+reported, while duplicate ISBNs (inside the file or already in the catalog) are
+skipped. Valid rows are still imported. A ready-to-use example lives in
+`sample_books_import.csv`.
 
 ---
 

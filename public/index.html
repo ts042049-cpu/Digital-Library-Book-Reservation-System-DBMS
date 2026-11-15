@@ -3,34 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<<<<<<< HEAD
     <title>KRMU Library | K.R. Mangalam University</title>
     <link rel="icon" type="image/webp" href="assets/krmu-logo-mark.webp">
-=======
-    <title>K.R. Mangalam University | CampusLib LMS</title>
-    <link rel="icon" type="image/png" href="images/logo-transparent.png">
-    <link rel="apple-touch-icon" href="images/logo.png">
->>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
     <link rel="stylesheet" href="css/style.css">
-    <script>
-        // Immediate Session Guard: Home page can ONLY be accessed via login
-        (function() {
-            try {
-                fetch('/api/auth/me', { credentials: 'include' })
-                    .then(function(res) { return res.json(); })
-                    .then(function(data) {
-                        if (!data || !data.authenticated) {
-                            window.location.replace('/login');
-                        }
-                    })
-                    .catch(function() {
-                        window.location.replace('/login');
-                    });
-            } catch(e) {
-                window.location.replace('/login');
-            }
-        })();
-    </script>
 </head>
 <body>
     <!-- ====================================================================
@@ -112,21 +87,12 @@
              ==================================================================== -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-<<<<<<< HEAD
                 <div class="brand-logo">
                     <img src="assets/krmu-logo-mark.webp" alt="K.R. Mangalam University emblem">
                 </div>
                 <div class="brand-text">
                     <h1>KRMU Library</h1>
                     <span>Library Circulation Desk</span>
-=======
-                <div class="brand-logo-container" title="K.R. Mangalam University">
-                    <img src="images/logo-transparent.png" alt="K.R. Mangalam University Logo" class="brand-logo-img">
-                </div>
-                <div class="brand-text">
-                    <h1 title="K.R. Mangalam University">K.R. Mangalam Univ.</h1>
-                    <span>Central Library LMS</span>
->>>>>>> 060fa33a74a80753a077c0432928b80b7051bd5a
                 </div>
             </div>
 
@@ -485,6 +451,12 @@
                             <p>Search, filter, inspect physical shelf locations, and manage title inventory</p>
                         </div>
                         <div class="page-actions">
+                            <input type="file" id="books-csv-input" accept=".csv,text/csv" hidden>
+                            <button class="btn btn-outline" id="btn-import-books"
+                                title="CSV columns: isbn, title, author (optional: publisher, publication_year, genre, total_copies, shelf_location)">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16V4m0 0l-4 4m4-4l4 4M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2" /></svg>
+                                <span>Import CSV</span>
+                            </button>
                             <button class="btn btn-primary" id="btn-add-book">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
                                 <span>Add New Book</span>

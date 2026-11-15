@@ -1,0 +1,6 @@
+ISBN,Title,Author,Publisher,Year,Genre,Copies,Shelf
+978-93-5302-101-1,Introduction to Algorithms (4th Ed),Thomas H. Cormen,MIT Press,2022,Computer Science,3,Shelf CS-01
+978-0-13-468599-1,Artificial Intelligence: A Modern Approach (4th Ed),Stuart Russell,Pearson,2021,Computer Science,2,Shelf CS-02
+978-81-317-5555-6,Engineering Mathematics - I,B. S. Grewal,Khanna Publishers,2020,Mathematics,5,Shelf MA-03
+978-93-8671-234-5,Principles of Marketing,Philip Kotler,Pearson,2018,Management,2,Shelf MG-04
+978-0-07-063456-6,Corporate Finance (12th Ed),Stephen A. Ross,McGraw Hill,2019,Management,1,Shelf MG-05
