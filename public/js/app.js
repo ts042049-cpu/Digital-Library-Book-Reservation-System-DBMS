@@ -38,11 +38,23 @@ const App = {
                 this.setCurrentUser(data.user);
                 return true;
             }
-            return false;
         } catch (err) {
             console.warn('[Session] Session check failed:', err.message);
-            return false;
         }
+
+        if (typeof localStorage !== 'undefined') {
+            try {
+                const saved = localStorage.getItem('campuslib_user');
+                if (saved) {
+                    const user = JSON.parse(saved);
+                    if (user && user.email) {
+                        this.setCurrentUser(user);
+                        return true;
+                    }
+                }
+            } catch (e) {}
+        }
+        return false;
     },
 
     showApp() {
@@ -148,6 +160,11 @@ const App = {
     setCurrentUser(user) {
         if (!user) return;
         this.state.currentUser = user;
+        if (typeof localStorage !== 'undefined') {
+            try {
+                localStorage.setItem('campuslib_user', JSON.stringify(user));
+            } catch (e) {}
+        }
 
         const staffName = document.getElementById('sidebar-staff-name');
         if (staffName) staffName.textContent = user.full_name || 'Librarian';
@@ -1572,6 +1589,9 @@ const App = {
     async handleLogout() {
         try {
             const data = await ApiService.auth.logout();
+            if (typeof localStorage !== 'undefined') {
+                try { localStorage.removeItem('campuslib_user'); } catch(e){}
+            }
             this.closeModal('modal-auth');
             this.showLoginGate();
             this.showToast(data.message || 'Logged out successfully', 'info');

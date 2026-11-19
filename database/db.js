@@ -106,9 +106,23 @@ async function createIndexes(db) {
 }
 
 function readSeed(name) {
-    const file = path.join(SEEDS_DIR, name);
-    if (!fs.existsSync(file)) return [];
-    return JSON.parse(fs.readFileSync(file, 'utf-8'));
+    const candidates = [
+        path.join(SEEDS_DIR, name),
+        path.join(process.cwd(), 'database', 'seeds', name),
+        path.join(__dirname, 'seeds', name),
+        path.join(__dirname, '..', 'database', 'seeds', name)
+    ];
+    for (const file of candidates) {
+        if (fs.existsSync(file)) {
+            try {
+                return JSON.parse(fs.readFileSync(file, 'utf-8'));
+            } catch (err) {
+                console.error(`[Database] Error reading seed file ${file}:`, err.message);
+            }
+        }
+    }
+    console.warn(`[Database] Seed file "${name}" could not be found.`);
+    return [];
 }
 
 function reviveDates(collectionName, docs) {
@@ -193,30 +207,50 @@ async function seedIfEmpty() {
     }
 }
 
+let isInitialized = false;
+
+async function initDatabase(db) {
+    if (isInitialized) return;
+    try {
+        await createIndexes(db);
+        await seedIfEmpty();
+        await refreshOverdueLoans();
+        isInitialized = true;
+    } catch (err) {
+        console.warn('[Database] Initial schema setup warning:', err.message);
+    }
+}
+
 function connect() {
     if (database) return Promise.resolve(database);
     if (connectPromise) return connectPromise;
 
+    if (process.env.VERCEL && !process.env.MONGO_URI) {
+        const msg = 'MONGO_URI is missing in Vercel environment variables. Please configure MONGO_URI in your Vercel Project Settings.';
+        console.error(`[Database Error] ${msg}`);
+        return Promise.reject(new Error(msg));
+    }
+
     connectPromise = (async () => {
         client = new MongoClient(MONGO_URI, {
-            serverSelectionTimeoutMS: 8000,
-            connectTimeoutMS: 8000,
-            maxPoolSize: 20
+            serverSelectionTimeoutMS: 5000,
+            connectTimeoutMS: 5000,
+            maxPoolSize: 10
         });
         await client.connect();
         database = client.db(MONGO_DB_NAME);
         await database.command({ ping: 1 });
-        await createIndexes(database);
-        await seedIfEmpty();
-        await refreshOverdueLoans();
-        console.log(`[Database] MongoDB connected — database "${MONGO_DB_NAME}" at ${MONGO_URI}`);
+        await initDatabase(database);
+        const safeUri = MONGO_URI.replace(/:([^:@]+)@/, ':****@');
+        console.log(`[Database] MongoDB connected — database "${MONGO_DB_NAME}" at ${safeUri}`);
         return database;
     })();
 
     connectPromise.catch((err) => {
         connectPromise = null;
+        client = null;
+        database = null;
         console.error('[Database] MongoDB connection failed:', err.message);
-        console.error('[Database] Start MongoDB (service "MongoDB") or set MONGO_URI in .env. Default: mongodb://127.0.0.1:27017');
     });
 
     return connectPromise;

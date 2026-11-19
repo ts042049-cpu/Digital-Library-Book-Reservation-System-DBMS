@@ -11,6 +11,9 @@ const app = express();
 const PRIMARY_PORT = parseInt(process.env.PORT, 10) || 5000;
 const SECONDARY_PORT = (PRIMARY_PORT === 5000) ? 3000 : 5000;
 
+// Trust reverse proxy (essential for Vercel, Heroku, and reverse proxy deployments)
+app.set('trust proxy', 1);
+
 app.use(cors({
     origin: (origin, callback) => {
         callback(null, true);
@@ -30,11 +33,22 @@ app.use(session({
     saveUninitialized: false,
     cookie: {
         httpOnly: true,
-        secure: false,
+        secure: 'auto',
         sameSite: 'lax',
         maxAge: 1000 * 60 * 60 * 24
     }
 }));
+
+// Stateless session header fallback (preserves session across serverless functions on Vercel)
+app.use((req, res, next) => {
+    if ((!req.session || !req.session.user) && req.headers['x-staff-user']) {
+        try {
+            req.session = req.session || {};
+            req.session.user = JSON.parse(decodeURIComponent(req.headers['x-staff-user']));
+        } catch (e) {}
+    }
+    next();
+});
 
 app.use((req, res, next) => {
     const start = Date.now();
@@ -47,6 +61,21 @@ app.use((req, res, next) => {
     next();
 });
 
+// Automatically ensure MongoDB is connected before processing API requests (critical for Vercel/serverless)
+app.use('/api', async (req, res, next) => {
+    try {
+        await connect();
+        next();
+    } catch (err) {
+        console.error('[Database Connection Error]:', err.message);
+        return res.status(500).json({
+            success: false,
+            message: 'Database connection failed. Please ensure MONGO_URI is set correctly in environment variables.',
+            error: err.message
+        });
+    }
+});
+
 app.use('/api', apiRoutes);
 
 app.all('/api/*', (req, res) => {
@@ -57,7 +86,7 @@ app.all('/api/*', (req, res) => {
 });
 
 app.get(['/login', '/login.html'], (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
 });
 
 app.get(['/terms', '/terms.html', '/policy', '/policies', '/terms-and-policy', '/privacy'], (req, res) => {

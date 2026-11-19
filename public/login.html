@@ -1189,6 +1189,7 @@
             async handleSessionLogout() {
                 try {
                     await ApiService.auth.logout();
+                    try { localStorage.removeItem('campuslib_user'); } catch(e){}
                     const banner = document.getElementById('active-session-banner');
                     if (banner) banner.classList.remove('show');
                     this.showAlert('Logged out of previous session.', 'success');
@@ -1238,6 +1239,8 @@
                 try {
                     const res = await ApiService.auth.login(username, password);
                     if (!res.success) throw new Error(res.message || 'Login failed.');
+
+                    try { localStorage.setItem('campuslib_user', JSON.stringify(res.user)); } catch(e){}
 
                     if (rememberMe) {
                         try { localStorage.setItem('campuslib_remembered_user', username); } catch(e){}

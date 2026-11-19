@@ -14,6 +14,15 @@ const ApiService = {
             'Accept': 'application/json'
         };
 
+        if (typeof localStorage !== 'undefined') {
+            try {
+                const saved = localStorage.getItem('campuslib_user');
+                if (saved) {
+                    defaultHeaders['X-Staff-User'] = encodeURIComponent(saved);
+                }
+            } catch (e) {}
+        }
+
         const config = {
             ...options,
             credentials: 'include',
