@@ -18,15 +18,11 @@ const App = {
         isLoading: false
     },
 
-    /**
-     * Initialize Application on DOM Ready
-     */
     async init() {
         this.setupNavigation();
         this.setupEventListeners();
         this.updateDateDisplay();
 
-        // Show the dashboard for an active session, otherwise the login gate.
         const isAuthenticated = await this.checkCurrentSession();
         if (isAuthenticated) {
             this.showApp();
@@ -35,9 +31,6 @@ const App = {
         }
     },
 
-    /**
-     * Verify Session Authentication with Backend
-     */
     async checkCurrentSession() {
         try {
             const data = await ApiService.auth.me();
@@ -52,9 +45,6 @@ const App = {
         }
     },
 
-    /**
-     * Reveal the main application shell for an authenticated staff member
-     */
     showApp() {
         const gate = document.getElementById('login-gate');
         if (gate) gate.style.display = 'none';
@@ -67,9 +57,6 @@ const App = {
         this.navigate(this.state.currentView || 'dashboard');
     },
 
-    /**
-     * Show the full-screen login gate and hide the application shell
-     */
     showLoginGate() {
         const appContainer = document.getElementById('app-container');
         if (appContainer) appContainer.hidden = true;
@@ -98,9 +85,6 @@ const App = {
         }
     },
 
-    /**
-     * Handle sign-in from the full-screen login gate
-     */
     async handleGateLogin(e) {
         e.preventDefault();
 
@@ -184,9 +168,6 @@ const App = {
         if (modalRole) modalRole.textContent = `Role: ${user.role || 'Staff'} (${user.staff_code || 'ID'})`;
     },
 
-    /**
-     * Date display in top navigation
-     */
     updateDateDisplay() {
         const now = new Date();
         const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
@@ -198,9 +179,6 @@ const App = {
         if (issueDateInput) issueDateInput.value = now.toISOString().split('T')[0];
     },
 
-    /**
-     * Setup sidebar navigation and router
-     */
     setupNavigation() {
         const navButtons = document.querySelectorAll('.sidebar-nav .nav-item');
         navButtons.forEach(btn => {
@@ -215,7 +193,6 @@ const App = {
             });
         });
 
-        // Mobile drawer toggle
         const mobileToggle = document.getElementById('mobile-toggle');
         if (mobileToggle) {
             mobileToggle.addEventListener('click', () => {
@@ -223,7 +200,6 @@ const App = {
             });
         }
 
-        // Global search handler
         const globalSearch = document.getElementById('global-search-input');
         if (globalSearch) {
             globalSearch.addEventListener('keypress', (e) => {
@@ -242,13 +218,9 @@ const App = {
         }
     },
 
-    /**
-     * View Router
-     */
     navigate(viewName) {
         this.state.currentView = viewName;
 
-        // Toggle active button in sidebar
         document.querySelectorAll('.sidebar-nav .nav-item').forEach(btn => {
             if (btn.getAttribute('data-view') === viewName) {
                 btn.classList.add('active');
@@ -257,7 +229,6 @@ const App = {
             }
         });
 
-        // Toggle views
         document.querySelectorAll('.page-view').forEach(view => {
             view.style.display = 'none';
         });
@@ -267,7 +238,6 @@ const App = {
             targetView.style.display = 'block';
         }
 
-        // Trigger appropriate data loader for active view
         switch (viewName) {
             case 'dashboard':
                 this.loadDashboard();
@@ -294,19 +264,13 @@ const App = {
                 this.loadReports();
                 break;
             case 'viva':
-                // Static DBMS specifications view
                 break;
             case 'terms':
-                // Static terms & policies view
                 break;
         }
     },
 
-    /**
-     * Event Listeners Registration
-     */
     setupEventListeners() {
-        // Books view filters
         const booksSearch = document.getElementById('books-search-input');
         if (booksSearch) booksSearch.addEventListener('input', this.debounce(() => this.loadBooks({ resetPage: true }), 300));
         const genreFilter = document.getElementById('books-genre-filter');
@@ -316,7 +280,6 @@ const App = {
         const sortFilter = document.getElementById('books-sort-filter');
         if (sortFilter) sortFilter.addEventListener('change', () => this.loadBooks({ resetPage: true }));
 
-        // Books table pagination
         const booksPrevBtn = document.getElementById('books-prev-btn');
         if (booksPrevBtn) {
             booksPrevBtn.addEventListener('click', () => {
@@ -336,7 +299,6 @@ const App = {
             });
         }
 
-        // Add Book Modal trigger
         const btnAddBook = document.getElementById('btn-add-book');
         if (btnAddBook) {
             btnAddBook.addEventListener('click', () => {
@@ -347,7 +309,6 @@ const App = {
             });
         }
 
-        // CSV bulk import trigger
         const btnImportBooks = document.getElementById('btn-import-books');
         const booksCsvInput = document.getElementById('books-csv-input');
         if (btnImportBooks && booksCsvInput) {
@@ -361,13 +322,11 @@ const App = {
             });
         }
 
-        // Book Form Submission
         const formBook = document.getElementById('form-book');
         if (formBook) {
             formBook.addEventListener('submit', (e) => this.handleSaveBook(e));
         }
 
-        // Members view filters
         const membersSearch = document.getElementById('members-search-input');
         if (membersSearch) membersSearch.addEventListener('input', this.debounce(() => this.loadMembers(), 300));
         const memberStatusFilter = document.getElementById('members-status-filter');
@@ -375,7 +334,6 @@ const App = {
         const memberTypeFilter = document.getElementById('members-type-filter');
         if (memberTypeFilter) memberTypeFilter.addEventListener('change', () => this.loadMembers());
 
-        // Register Member Modal trigger
         const btnAddMember = document.getElementById('btn-add-member');
         if (btnAddMember) {
             btnAddMember.addEventListener('click', () => {
@@ -387,37 +345,31 @@ const App = {
             });
         }
 
-        // Member Form Submission
         const formMember = document.getElementById('form-member');
         if (formMember) {
             formMember.addEventListener('submit', (e) => this.handleSaveMember(e));
         }
 
-        // Issue Desk Form Submission
         const formIssue = document.getElementById('form-issue-book');
         if (formIssue) {
             formIssue.addEventListener('submit', (e) => this.handleIssueBook(e));
         }
 
-        // Return Search
         const returnSearch = document.getElementById('return-search-input');
         if (returnSearch) {
             returnSearch.addEventListener('input', this.debounce(() => this.loadReturnDesk(), 300));
         }
 
-        // Process Return Form Submission
         const formReturn = document.getElementById('form-process-return');
         if (formReturn) {
             formReturn.addEventListener('submit', (e) => this.handleConfirmReturn(e));
         }
 
-        // Transactions filters
         const transSearch = document.getElementById('transactions-search-input');
         if (transSearch) transSearch.addEventListener('input', this.debounce(() => this.loadTransactions(), 300));
         const transStatus = document.getElementById('transactions-status-filter');
         if (transStatus) transStatus.addEventListener('change', () => this.loadTransactions());
 
-        // Full-screen login gate
         const gateForm = document.getElementById('form-gate-login');
         if (gateForm) {
             gateForm.addEventListener('submit', (e) => this.handleGateLogin(e));
@@ -427,7 +379,6 @@ const App = {
             gatePasswordToggle.addEventListener('click', () => this.toggleGatePassword());
         }
 
-        // Any API call that reports 401 sends the user back to the login gate
         document.addEventListener('auth:required', () => {
             if (!document.getElementById('app-container')?.hidden) {
                 this.showLoginGate();
@@ -435,13 +386,11 @@ const App = {
             }
         });
 
-        // Staff Login Form Submission
         const formLogin = document.getElementById('form-staff-login');
         if (formLogin) {
             formLogin.addEventListener('submit', (e) => this.handleLogin(e));
         }
 
-        // Viva modal triggers
         const btnViva = document.getElementById('btn-viva-modal');
         if (btnViva) {
             btnViva.addEventListener('click', () => this.openModal('modal-viva'));
@@ -452,7 +401,6 @@ const App = {
             btnAuth.addEventListener('click', () => this.openModal('modal-auth'));
         }
 
-        // Close modal on backdrop click
         document.querySelectorAll('.modal-backdrop').forEach(modal => {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) {
@@ -461,7 +409,6 @@ const App = {
             });
         });
 
-        // Close modal on Escape key
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 document.querySelectorAll('.modal-backdrop.active').forEach(modal => {
@@ -471,9 +418,6 @@ const App = {
         });
     },
 
-    // ====================================================================
-    // 1. DASHBOARD CONTROLLER (GET /api/reports/dashboard)
-    // ====================================================================
     async loadDashboard() {
         try {
             const data = await ApiService.reports.getDashboard();
@@ -497,7 +441,6 @@ const App = {
             setElem('stat-total-members', stats.totalMembers ?? 0);
             setElem('stat-active-members', `${stats.activeMembers ?? 0} active cardholders`);
 
-            // Update Overdue badge in sidebar
             this.state.overdueCount = stats.overdueLoans || 0;
             const badge = document.getElementById('sidebar-overdue-badge');
             if (badge) {
@@ -505,7 +448,6 @@ const App = {
                 badge.style.display = (stats.overdueLoans > 0) ? 'inline-block' : 'none';
             }
 
-            // Render Recently Issued Books Table
             const recentIssuesTbody = document.getElementById('dashboard-recent-issues-table');
             if (recentIssuesTbody) {
                 if (data.recentIssues && data.recentIssues.length > 0) {
@@ -533,7 +475,6 @@ const App = {
                 }
             }
 
-            // Render Alerts Table (Due soon or Overdue)
             const alertsTbody = document.getElementById('dashboard-alerts-table');
             if (alertsTbody) {
                 if (data.dueSoonOrOverdue && data.dueSoonOrOverdue.length > 0) {
@@ -565,7 +506,6 @@ const App = {
                 }
             }
 
-            // Render Activity Feed
             const activityList = document.getElementById('dashboard-activity-list');
             if (activityList) {
                 if (data.recentLogs && data.recentLogs.length > 0) {
@@ -589,7 +529,6 @@ const App = {
                 }
             }
 
-            // Render Genre Distribution
             const genreTbody = document.getElementById('dashboard-genre-table');
             if (genreTbody) {
                 if (data.genreDistribution && data.genreDistribution.length > 0) {
@@ -612,9 +551,6 @@ const App = {
         }
     },
 
-    // ====================================================================
-    // 2. BOOK CATALOG CONTROLLER (GET /api/books)
-    // ====================================================================
     async loadBooks({ resetPage = false } = {}) {
         try {
             const search = document.getElementById('books-search-input')?.value || '';
@@ -640,7 +576,6 @@ const App = {
                 page: data.page || 1
             };
 
-            // Populate genres in dropdown
             const genreSelect = document.getElementById('books-genre-filter');
             if (genreSelect && genreSelect.options.length <= 1 && data.genres) {
                 data.genres.forEach(g => {
@@ -842,9 +777,6 @@ const App = {
         }
     },
 
-    // ====================================================================
-    // 3. MEMBERS DIRECTORY CONTROLLER (GET /api/members)
-    // ====================================================================
     async loadMembers() {
         try {
             const search = document.getElementById('members-search-input')?.value || '';
@@ -979,9 +911,6 @@ const App = {
         }
     },
 
-    // ====================================================================
-    // 4. CIRCULATION DESK: ISSUE BOOK (POST /api/loans/issue)
-    // ====================================================================
     async prepareIssueDesk() {
         try {
             document.getElementById('issue-success-slip').style.display = 'none';
@@ -995,11 +924,9 @@ const App = {
             this.state.bookMatchCount = booksData.count || this.state.books.length;
             this.state.members = membersData.members || [];
 
-            // Reset the book picker
             this.resetIssueBookPicker();
             this.setupIssueBookPicker();
 
-            // Populate Members Select
             const memberSelect = document.getElementById('issue-member-select');
             if (memberSelect) {
                 memberSelect.innerHTML = `<option value="">-- Choose registered student / faculty --</option>` +
@@ -1032,11 +959,6 @@ const App = {
         }
     },
 
-    // ----------------------------------------------------------------
-    // Custom searchable book picker (replaces the native <select>)
-    // Native dropdowns cannot show long titles — options render wider
-    // than the window and the start of the title gets cut off.
-    // ----------------------------------------------------------------
     setupIssueBookPicker() {
         const picker = document.getElementById('issue-book-picker');
         const trigger = document.getElementById('issue-book-trigger');
@@ -1046,7 +968,6 @@ const App = {
             trigger.onclick = () => this.toggleIssueBookPanel();
         }
 
-        // Close when clicking outside the picker (or its search box)
         if (!this._issuePickerOutsideHandler) {
             this._issuePickerOutsideHandler = (e) => {
                 const pickerEl = document.getElementById('issue-book-picker');
@@ -1057,7 +978,6 @@ const App = {
             document.addEventListener('click', this._issuePickerOutsideHandler);
         }
 
-        // Escape closes the panel
         if (!this._issuePickerKeyHandler) {
             this._issuePickerKeyHandler = (e) => {
                 if (e.key === 'Escape') this.closeIssueBookPanel();
@@ -1067,7 +987,6 @@ const App = {
 
         this.renderIssueBookOptions();
 
-        // Live search across the full accession catalog
         if (bookSearch) {
             bookSearch.value = '';
             bookSearch.oninput = this.debounce(async () => {
@@ -1106,7 +1025,6 @@ const App = {
             return;
         }
 
-        // "Showing N of M" hint so users know the list is capped at 300 rows.
         if (resultHint) {
             const shown = this.state.books.length;
             const total = this.state.bookMatchCount || shown;
@@ -1158,7 +1076,6 @@ const App = {
             trigger.title = book.title;
         }
 
-        // Re-render so the selected row is highlighted
         this.renderIssueBookOptions();
         this.closeIssueBookPanel();
 
@@ -1245,10 +1162,8 @@ const App = {
 
             this.showToast(data.message, 'success');
 
-            // Clear the selected title immediately so the form is ready for the next issue
             this.resetIssueBookPicker();
 
-            // Render printable issue slip
             const slip = document.getElementById('issue-success-slip');
             const content = document.getElementById('slip-content');
             if (slip && content && data.loan) {
@@ -1264,7 +1179,6 @@ const App = {
                 slip.style.display = 'block';
             }
 
-            // Refresh selections
             this.prepareIssueDesk();
 
         } catch (err) {
@@ -1277,9 +1191,6 @@ const App = {
         }
     },
 
-    // ====================================================================
-    // 5. RETURN DESK (POST /api/loans/:id/return)
-    // ====================================================================
     async loadReturnDesk() {
         try {
             const search = document.getElementById('return-search-input')?.value || '';
@@ -1366,7 +1277,6 @@ const App = {
                 `;
             }
 
-            // Compute fine dynamically if overdue
             const today = new Date().toISOString().split('T')[0];
             const fineAlert = document.getElementById('return-fine-alert');
             const fineText = document.getElementById('return-fine-text');
@@ -1440,9 +1350,6 @@ const App = {
         }
     },
 
-    // ====================================================================
-    // 6. OVERDUE MANAGEMENT (GET /api/reports/overdue)
-    // ====================================================================
     async loadOverdueList() {
         try {
             const data = await ApiService.reports.getOverdue();
@@ -1513,9 +1420,6 @@ const App = {
         }
     },
 
-    // ====================================================================
-    // 7. TRANSACTION HISTORY (GET /api/loans)
-    // ====================================================================
     async loadTransactions() {
         try {
             const search = document.getElementById('transactions-search-input')?.value || '';
@@ -1567,15 +1471,11 @@ const App = {
         }
     },
 
-    // ====================================================================
-    // 8. REPORTS & ANALYTICS (GET /api/reports)
-    // ====================================================================
     async loadReports() {
         try {
             const data = await ApiService.reports.getAnalytics();
             if (!data.success) throw new Error(data.message);
 
-            // 1. Popular Books
             const popularTbody = document.getElementById('reports-popular-books');
             if (popularTbody) {
                 if (data.popularBooks && data.popularBooks.length > 0) {
@@ -1594,7 +1494,6 @@ const App = {
                 }
             }
 
-            // 2. Top Borrowers
             const borrowersTbody = document.getElementById('reports-top-borrowers');
             if (borrowersTbody) {
                 if (data.topBorrowers && data.topBorrowers.length > 0) {
@@ -1611,7 +1510,6 @@ const App = {
                 }
             }
 
-            // 3. Inventory Breakdown
             const inv = data.inventory || {};
             const setVal = (id, v) => {
                 const el = document.getElementById(id);
@@ -1633,9 +1531,6 @@ const App = {
         window.open(url, '_blank');
     },
 
-    // ====================================================================
-    // 9. AUTHENTICATION & LOGIN/LOGOUT (POST /api/auth/login, logout)
-    // ====================================================================
     async handleLogin(e) {
         e.preventDefault();
         const submitBtn = e.target.querySelector('button[type="submit"]');
@@ -1663,7 +1558,6 @@ const App = {
             this.closeModal('modal-auth');
             this.resetForm('form-staff-login');
 
-            // Refresh current view with authorized session
             this.navigate(this.state.currentView);
         } catch (err) {
             this.showToast(err.message, 'error');
@@ -1725,9 +1619,6 @@ const App = {
         }
     },
 
-    // ====================================================================
-    // 10. VIVA DEMO SCENARIOS RUNNER
-    // ====================================================================
     demoScenario(scenario) {
         this.closeModal('modal-viva');
         switch (scenario) {
@@ -1793,9 +1684,6 @@ const App = {
         }
     },
 
-    // ====================================================================
-    // MODALS & UTILITIES
-    // ====================================================================
     openModal(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) modal.classList.add('active');
@@ -1870,7 +1758,6 @@ const App = {
     }
 };
 
-// Bootstrap application on window load
 window.addEventListener('DOMContentLoaded', () => {
     App.init();
 });

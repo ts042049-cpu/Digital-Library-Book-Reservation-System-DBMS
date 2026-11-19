@@ -29,7 +29,6 @@
             line-height: 1.6;
         }
 
-        /* Topbar Header */
         .policy-header {
             background: #ffffff;
             border-bottom: 1px solid var(--policy-border);
@@ -81,7 +80,6 @@
             gap: 0.75rem;
         }
 
-        /* Hero Banner */
         .policy-hero {
             background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
             color: #ffffff;
@@ -139,7 +137,6 @@
             margin-bottom: 1.75rem;
         }
 
-        /* Search & Filter Bar */
         .policy-search-box {
             background: #ffffff;
             border-radius: 10px;
@@ -176,7 +173,6 @@
             font-weight: 600;
         }
 
-        /* Main Content Grid */
         .policy-layout-container {
             max-width: 1280px;
             margin: 2rem auto;
@@ -187,7 +183,6 @@
             align-items: flex-start;
         }
 
-        /* Sticky Left Sidebar Navigation */
         .policy-toc-sidebar {
             background: #ffffff;
             border: 1px solid var(--policy-border);
@@ -258,7 +253,6 @@
             color: #64748b;
         }
 
-        /* Policy Main Content Articles */
         .policy-articles {
             display: flex;
             flex-direction: column;
@@ -345,7 +339,6 @@
             margin-bottom: 0.4rem;
         }
 
-        /* Policy Callouts */
         .policy-callout {
             border-radius: 8px;
             padding: 1rem 1.25rem;
@@ -381,7 +374,6 @@
             margin-top: 1px;
         }
 
-        /* Policy Comparison Table */
         .policy-table-wrapper {
             overflow-x: auto;
             margin: 1.25rem 0;
@@ -418,7 +410,6 @@
             background-color: #f8fafc;
         }
 
-        /* Interactive Fine Calculator Widget */
         .calculator-widget {
             background: linear-gradient(135deg, #f8fafc 0%, #eff6ff 100%);
             border: 1px solid #bfdbfe;
@@ -483,7 +474,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Bottom Acceptance Banner */
         .policy-footer-acceptance {
             background: #ffffff;
             border: 1px solid var(--policy-border);
@@ -508,7 +498,6 @@
             margin: 0 auto 1.5rem auto;
         }
 
-        /* Main Footer */
         .policy-page-footer {
             background: #0f172a;
             color: #94a3b8;
@@ -527,7 +516,6 @@
             gap: 1.5rem;
         }
 
-        /* Print Media Styles */
         @media print {
             .policy-header, .policy-toc-sidebar, .policy-search-box, .policy-actions-group, .calculator-widget, .policy-footer-acceptance, .policy-page-footer {
                 display: none !important;
@@ -560,7 +548,6 @@
             }
         }
 
-        /* Responsive */
         @media (max-width: 960px) {
             .policy-layout-container {
                 grid-template-columns: 1fr;
@@ -577,7 +564,6 @@
 </head>
 <body class="policy-body">
 
-    <!-- Top Navigation Header -->
     <header class="policy-header">
         <div class="policy-header-inner">
             <a href="index.html" class="policy-brand" title="K.R. Mangalam University Central Library">
@@ -607,7 +593,6 @@
         </div>
     </header>
 
-    <!-- Hero Header Banner -->
     <section class="policy-hero">
         <div class="policy-hero-inner">
             <div class="hero-meta-badge">
@@ -623,7 +608,6 @@
                 Official rules governing borrowing limits, loan durations, overdue fine structures, loss replacements, digital lab acceptable use, and student personal data protection.
             </p>
 
-            <!-- Search / Keyword Filter Box -->
             <div class="policy-search-box">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -634,10 +618,8 @@
         </div>
     </section>
 
-    <!-- Layout Grid -->
     <div class="policy-layout-container">
         
-        <!-- Sticky Left Sidebar Table of Contents -->
         <aside class="policy-toc-sidebar">
             <div class="toc-title">Table of Contents</div>
             <nav>
@@ -663,10 +645,8 @@
             </div>
         </aside>
 
-        <!-- Right Main Articles -->
         <main class="policy-articles" id="policy-articles-container">
 
-            <!-- SECTION 1 -->
             <article class="policy-card" id="section-1" data-keywords="eligibility scope student faculty registration cardholder authority jurisdiction">
                 <div class="policy-card-header">
                     <div>
@@ -695,7 +675,6 @@
                 </div>
             </article>
 
-            <!-- SECTION 2 -->
             <article class="policy-card" id="section-2" data-keywords="smart card id card non-transferable barcode lost card verification security">
                 <div class="policy-card-header">
                     <div>
@@ -717,7 +696,6 @@
                 </div>
             </article>
 
-            <!-- SECTION 3 -->
             <article class="policy-card" id="section-3" data-keywords="borrowing quotas limits loan durations days student faculty books reference non-circulating">
                 <div class="policy-card-header">
                     <div>
@@ -784,7 +762,6 @@
                 </div>
             </article>
 
-            <!-- SECTION 4 -->
             <article class="policy-card" id="section-4" data-keywords="overdue fines late return fee penalty calculation calculator suspension threshold">
                 <div class="policy-card-header">
                     <div>
@@ -804,7 +781,6 @@
                         <li><strong>Fine Payment Methods:</strong> Fines can be paid directly at the circulation counter via UPI, Debit Card, or added to semester fee dues.</li>
                     </ul>
 
-                    <!-- Interactive Late Fee Calculator Widget -->
                     <div class="calculator-widget">
                         <div class="calculator-title">
                             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:18px;height:18px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
@@ -839,7 +815,6 @@
                 </div>
             </article>
 
-            <!-- SECTION 5 -->
             <article class="policy-card" id="section-5" data-keywords="reservations holds queue renewal pickup shelf expiry waitlist">
                 <div class="policy-card-header">
                     <div>
@@ -860,7 +835,6 @@
                 </div>
             </article>
 
-            <!-- SECTION 6 -->
             <article class="policy-card" id="section-6" data-keywords="lost book damage defaced pages replacement cost processing fee surcharge">
                 <div class="policy-card-header">
                     <div>
@@ -885,7 +859,6 @@
                 </div>
             </article>
 
-            <!-- SECTION 7 -->
             <article class="policy-card" id="section-7" data-keywords="digital library computer lab wifi acceptable use ieee sciencedirect scraping security">
                 <div class="policy-card-header">
                     <div>
@@ -907,7 +880,6 @@
                 </div>
             </article>
 
-            <!-- SECTION 8 -->
             <article class="policy-card" id="section-8" data-keywords="silence reading hall etiquette mobile phones conduct disciplinary food drinks">
                 <div class="policy-card-header">
                     <div>
@@ -928,7 +900,6 @@
                 </div>
             </article>
 
-            <!-- SECTION 9 -->
             <article class="policy-card" id="section-9" data-keywords="privacy student data security gdpr audit log encryption records protection personal information">
                 <div class="policy-card-header">
                     <div>
@@ -961,7 +932,6 @@
                 </div>
             </article>
 
-            <!-- SECTION 10 -->
             <article class="policy-card" id="section-10" data-keywords="clearance no dues grievance contact librarian appeals address email phone">
                 <div class="policy-card-header">
                     <div>
@@ -990,7 +960,6 @@
         </main>
     </div>
 
-    <!-- Bottom Acceptance & Quick Jump Action Box -->
     <div style="max-width:1280px; margin:0 auto; padding:0 1.5rem;">
         <div class="policy-footer-acceptance">
             <h3>Understand & Comply with Library Regulations</h3>
@@ -1008,7 +977,6 @@
         </div>
     </div>
 
-    <!-- Main Footer -->
     <footer class="policy-page-footer">
         <div class="policy-page-footer-inner">
             <div>
@@ -1025,7 +993,6 @@
         </div>
     </footer>
 
-    <!-- Interactive Script -->
     <script>
         const PolicyApp = {
             async init() {
@@ -1038,7 +1005,6 @@
                     const res = await fetch('/api/auth/me', { credentials: 'include' });
                     const data = await res.json();
                     if (!data || !data.authenticated) {
-                        // Unauthenticated users must log in before accessing the home page
                         document.querySelectorAll('a[href="index.html"]').forEach(el => {
                             el.href = 'login.html';
                             el.title = 'Authentication required: Sign in to access the Library Dashboard';
@@ -1067,9 +1033,6 @@
                     return;
                 }
 
-                // Calculation matching database trigger:
-                // First 7 days @ ₹5/day = ₹35
-                // Beyond 7 days @ ₹10/day
                 let fine = 0;
                 let breakdown = '';
                 if (days <= 7) {

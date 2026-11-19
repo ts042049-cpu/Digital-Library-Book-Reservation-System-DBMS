@@ -574,7 +574,6 @@ node test_integration.js      # stop npm run dev first (ports 5000/3000)
 Digital-Library-Book-Reservation-System-DBMS/
 ├── server.js                     Express app; awaits MongoDB connect before listen
 ├── routes/api.js                 REST API — 29 async MongoDB handlers
-├── middleware/auth.js            Session and role guards
 ├── database/
 │   ├── db.js                     Connection, indexes, counters, seeds, dates, audit
 │   ├── mongodb_schema.md         Document shapes, indexes, integrity strategy

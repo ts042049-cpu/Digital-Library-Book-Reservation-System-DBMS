@@ -1,7 +1,3 @@
-/**
- * Automated Full-Stack Integration Test Suite
- * Tests all 10 requirements: Auth, Dashboard, Books, Members, Circulation, Overdue, CSV Export, Logout
- */
 
 const http = require('http');
 require('dotenv').config();
@@ -48,17 +44,14 @@ function request(method, path, body = null, cookie = '') {
 setTimeout(async () => {
     try {
         console.log('=== TEST 1: AUTHENTICATION FLOW ===');
-        // Bad password test
         const badLogin = await request('POST', '/api/auth/login', { username: 'admin@library.edu', password: 'wrongpassword' });
         console.log('1.1 Bad login status:', badLogin.status, '(Expected 401)');
         if (badLogin.status !== 401) throw new Error('Bad password was accepted!');
 
-        // Good login test
         const goodLogin = await request('POST', '/api/auth/login', { username: 'admin@library.edu', password: 'admin123' });
         console.log('1.2 Valid login status:', goodLogin.status, 'User:', goodLogin.body.user.full_name, 'Role:', goodLogin.body.user.role);
         if (goodLogin.status !== 200 || !sessionCookie) throw new Error('Login failed or cookie not set');
 
-        // Check session via /api/auth/me
         const meRes = await request('GET', '/api/auth/me', null, sessionCookie);
         console.log('1.3 /api/auth/me status:', meRes.status, 'Session User:', meRes.body.user.full_name);
         if (!meRes.body.authenticated) throw new Error('/api/auth/me did not recognize session!');
@@ -83,14 +76,12 @@ setTimeout(async () => {
         console.log('3.1 Create book status:', newBookRes.status, 'Message:', newBookRes.body.message);
         const createdBookId = newBookRes.body.bookId;
 
-        // Verify book in list (raw space — request() applies encodeURI once)
         const booksList = await request('GET', '/api/books?search=Modern Operating', null, sessionCookie);
         console.log('3.2 Search created book count:', booksList.body.count);
         if (!booksList.body.count || booksList.body.count < 1) {
             throw new Error('Book search did not find the newly created title!');
         }
 
-        // Edit book
         const editBookRes = await request('PUT', '/api/books/' + createdBookId, {
             title: 'Modern Operating Systems (Updated Edition)',
             total_copies: 6,
@@ -98,7 +89,6 @@ setTimeout(async () => {
         }, sessionCookie);
         console.log('3.3 Edit book status:', editBookRes.status, 'Message:', editBookRes.body.message);
 
-        // Bulk CSV import: one valid row, one duplicate ISBN, one invalid row
         const importIsbn = '978-' + Math.floor(1000000000 + Math.random() * 9000000000);
         const csvSample = [
             'ISBN,Title,Author,Genre,Copies,Shelf',
@@ -136,11 +126,9 @@ setTimeout(async () => {
         const createdMemberId = newMemberRes.body.memberId;
 
         console.log('\n=== TEST 5: CIRCULATION (ISSUE & RETURN ATOMICITY) ===');
-        // Initial available copies
         const bookBeforeIssue = (await request('GET', '/api/books/' + createdBookId, null, sessionCookie)).body.book;
         console.log('5.1 Copies available before issue:', bookBeforeIssue.available_copies);
 
-        // Issue book
         const issueRes = await request('POST', '/api/loans/issue', {
             book_id: createdBookId,
             member_id: createdMemberId,
@@ -150,28 +138,24 @@ setTimeout(async () => {
         console.log('5.2 Issue status:', issueRes.status, 'Loan ID:', issueRes.body.loan.loan_id);
         const testLoanId = issueRes.body.loan.loan_id;
 
-        // Verify stock decremented
         const bookAfterIssue = (await request('GET', '/api/books/' + createdBookId, null, sessionCookie)).body.book;
         console.log('5.3 Copies available after issue:', bookAfterIssue.available_copies);
         if (bookAfterIssue.available_copies !== bookBeforeIssue.available_copies - 1) {
             throw new Error('Stock was not decremented!');
         }
 
-        // Return book
         const returnRes = await request('POST', '/api/loans/' + testLoanId + '/return', {
             fine_paid: 1,
             remarks: 'Returned in good shape'
         }, sessionCookie);
         console.log('5.4 Return status:', returnRes.status, 'Message:', returnRes.body.message);
 
-        // Verify stock restored
         const bookAfterReturn = (await request('GET', '/api/books/' + createdBookId, null, sessionCookie)).body.book;
         console.log('5.5 Copies available after return:', bookAfterReturn.available_copies);
         if (bookAfterReturn.available_copies !== bookBeforeIssue.available_copies) {
             throw new Error('Stock was not restored!');
         }
 
-        // Clean up test book and member
         await request('DELETE', '/api/books/' + createdBookId, null, sessionCookie);
         await request('DELETE', '/api/members/' + createdMemberId, null, sessionCookie);
         console.log('5.6 Cleanup of temporary test records complete.');
@@ -204,7 +188,6 @@ setTimeout(async () => {
             throw new Error('/terms did not return terms.html');
         }
 
-        // The app shell is public; it displays the login gate until a session exists.
         const unauthHomeRes = await request('GET', '/');
         const homeHasGate = typeof unauthHomeRes.body === 'string' && unauthHomeRes.body.includes('id="login-gate"');
         console.log('8.3 Unauthenticated GET / status:', unauthHomeRes.status, 'Has Login Gate:', homeHasGate);

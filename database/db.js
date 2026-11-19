@@ -1,15 +1,3 @@
-/**
- * KRMU Library — MongoDB Data Access Layer
- * ---------------------------------------------------------------
- * Uses the official MongoDB Node.js driver with a single shared
- * connection pool. Collections keep the numeric business keys
- * (book_id, member_id, loan_id, ...) so the REST API and frontend
- * contract stay unchanged, while documents store real BSON dates.
- *
- * Collections: books, members, staffs, loans, reservations,
- *              auditlogs, counters
- */
-
 const fs = require('node:fs');
 const path = require('node:path');
 require('dotenv').config();
@@ -26,8 +14,6 @@ let client = null;
 let database = null;
 let connectPromise = null;
 
-// Date fields per collection — JSON seeds store ISO strings which are
-// revived into BSON Date objects while inserting.
 const DATE_FIELDS = {
     staffs: ['hire_date', 'created_at'],
     members: ['membership_date', 'created_at'],
@@ -37,9 +23,6 @@ const DATE_FIELDS = {
     auditlogs: ['timestamp']
 };
 
-// ====================================================================
-// DATE HELPERS (all dates are handled in UTC to avoid TZ drift)
-// ====================================================================
 function toDate(value) {
     if (value instanceof Date) return value;
     if (value === null || value === undefined || value === '') return null;
@@ -63,7 +46,6 @@ function daysBetween(from, to) {
     return Math.round((startOfDayUTC(to) - startOfDayUTC(from)) / DAY_MS);
 }
 
-/** BSON Date -> "YYYY-MM-DD" for the frontend contract. */
 function toDateOnly(value) {
     if (value === null || value === undefined) return null;
     const date = toDate(value);
@@ -71,7 +53,6 @@ function toDateOnly(value) {
     return date.toISOString().slice(0, 10);
 }
 
-/** BSON Date -> "YYYY-MM-DD HH:mm:ss" for activity feeds. */
 function toDateTime(value) {
     if (value === null || value === undefined) return null;
     const date = toDate(value);
@@ -79,14 +60,10 @@ function toDateTime(value) {
     return date.toISOString().slice(0, 19).replace('T', ' ');
 }
 
-/** Escape a user supplied search term before building a RegExp. */
 function escapeRegex(text) {
     return String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// ====================================================================
-// CONNECTION & SCHEMA SETUP
-// ====================================================================
 async function createIndexes(db) {
     await Promise.all([
         db.collection('books').createIndexes([
@@ -155,7 +132,6 @@ async function insertSeed(collectionName, docs) {
     }
 }
 
-/** Insert the demo data set + the full KRMU accession catalog. */
 async function seedAll() {
     const staffs = readSeed('staffs.json');
     const members = readSeed('members.json');
@@ -182,10 +158,6 @@ async function seedAll() {
     console.log(`[Database] Seeded ${books.length.toLocaleString()} book titles, ${staffs.length} staff, ${members.length} members, ${loans.length} loans.`);
 }
 
-/**
- * Derive available_copies from the active loans so the seeded inventory is
- * internally consistent (total_copies − copies currently on loan).
- */
 async function reconcileBookStock() {
     const active = await database.collection('loans').aggregate([
         { $match: { return_date: null } },
@@ -221,10 +193,6 @@ async function seedIfEmpty() {
     }
 }
 
-/**
- * Connect once, create indexes, seed on first run and refresh overdue
- * loans. Safe to call repeatedly (all routes await this via getDb()).
- */
 function connect() {
     if (database) return Promise.resolve(database);
     if (connectPromise) return connectPromise;
@@ -254,7 +222,6 @@ function connect() {
     return connectPromise;
 }
 
-/** Synchronous accessor — valid only after connect() resolves. */
 function getDb() {
     if (!database) throw new Error('MongoDB is not connected yet. Await connect() before using the database.');
     return database;
@@ -269,9 +236,6 @@ async function close() {
     }
 }
 
-// ====================================================================
-// SEQUENCES, AUDIT TRAIL & OVERDUE REFRESH
-// ====================================================================
 async function nextSequence(name) {
     const result = await getDb().collection('counters').findOneAndUpdate(
         { _id: name },
@@ -282,10 +246,6 @@ async function nextSequence(name) {
     return doc.seq;
 }
 
-/**
- * Reserve a contiguous block of ids in a single round-trip. Returns the first
- * id of the block (e.g. for bulk CSV imports). Returns null when count <= 0.
- */
 async function nextSequenceRange(name, count) {
     const amount = parseInt(count, 10);
     if (!Number.isFinite(amount) || amount <= 0) return null;
@@ -314,10 +274,6 @@ async function logAudit(actionType, description, staffName = 'System') {
     }
 }
 
-/**
- * Mark active loans past their due date as Overdue and recalculate the
- * fine at ₹5.00 per day. Uses a single bulkWrite (no multi-doc tx needed).
- */
 async function refreshOverdueLoans() {
     if (!database) return;
     try {
@@ -345,10 +301,6 @@ async function refreshOverdueLoans() {
     }
 }
 
-/**
- * Restore the pristine demo state: demo staff/members/loans plus the full
- * 14,095-title accession catalog. Used by POST /api/system/reset-demo-data.
- */
 async function resetDemoData() {
     const db = getDb();
     const collections = ['books', 'members', 'staffs', 'loans', 'reservations', 'auditlogs', 'counters'];

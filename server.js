@@ -11,10 +11,8 @@ const app = express();
 const PRIMARY_PORT = parseInt(process.env.PORT, 10) || 5000;
 const SECONDARY_PORT = (PRIMARY_PORT === 5000) ? 3000 : 5000;
 
-// Enable Cross-Origin Resource Sharing with credentials for session auth
 app.use(cors({
     origin: (origin, callback) => {
-        // Allow all local origins (localhost, 127.0.0.1, file:// null origin)
         callback(null, true);
     },
     credentials: true,
@@ -22,12 +20,10 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-// Body and Cookie Parsers (generous JSON limit for CSV bulk imports)
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Session Management with secure cookie support
 app.use(session({
     secret: process.env.SESSION_SECRET || 'campuslib_session_secret_key_2026',
     resave: false,
@@ -36,11 +32,10 @@ app.use(session({
         httpOnly: true,
         secure: false,
         sameSite: 'lax',
-        maxAge: 1000 * 60 * 60 * 24 // 24-hour session
+        maxAge: 1000 * 60 * 60 * 24
     }
 }));
 
-// Request Logger
 app.use((req, res, next) => {
     const start = Date.now();
     res.on('finish', () => {
@@ -52,10 +47,8 @@ app.use((req, res, next) => {
     next();
 });
 
-// REST API Endpoints
 app.use('/api', apiRoutes);
 
-// Fallback for non-existent API routes (must precede frontend catch-all)
 app.all('/api/*', (req, res) => {
     res.status(404).json({
         success: false,
@@ -63,9 +56,6 @@ app.all('/api/*', (req, res) => {
     });
 });
 
-// Login and Terms/Policy share the same public entry point.
-// The app shell contains the circulation-desk login gate, so /login serves
-// index.html too — giving a single, consistent login screen everywhere.
 app.get(['/login', '/login.html'], (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -74,21 +64,16 @@ app.get(['/terms', '/terms.html', '/policy', '/policies', '/terms-and-policy', '
     res.sendFile(path.join(__dirname, 'public', 'terms.html'));
 });
 
-// The app shell is always served. When there is no staff session the shell's
-// built-in login gate is displayed; every data endpoint stays auth-protected.
 app.get(['/', '/index.html', '/dashboard', '/home'], (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Static frontend assets (styles, scripts, images)
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
-// Fallback for client-side navigation: always hand back the app shell.
 app.use((req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Centralized Error handling middleware
 app.use((err, req, res, next) => {
     console.error('[Server Error]:', err.stack);
     res.status(500).json({
@@ -101,13 +86,11 @@ app.use((err, req, res, next) => {
 let primaryServer = null;
 let secondaryServer = null;
 
-// Start the HTTP listeners only after MongoDB is reachable & seeded.
 async function startServers() {
     if (primaryServer) return primaryServer;
 
     await connect();
 
-    // Start Primary Server (Port 5000)
     primaryServer = app.listen(PRIMARY_PORT, () => {
         console.log('================================================================');
         console.log('   KRMU LIBRARY - K.R. MANGALAM UNIVERSITY');
@@ -164,7 +147,6 @@ function handleStartupFailure() {
     process.exit(1);
 }
 
-// Auto-start when executed directly as main script
 if (require.main === module) {
     startServers().catch(handleStartupFailure);
 }
@@ -186,7 +168,6 @@ process.on('unhandledRejection', (reason, promise) => {
     console.error('[Unhandled Rejection]:', reason);
 });
 
-// Attach helper methods to app export for testing and programmatic usage
 app.startServers = startServers;
 app.stopServers = stopServers;
 

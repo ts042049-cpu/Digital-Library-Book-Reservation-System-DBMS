@@ -1,14 +1,10 @@
 const ApiService = {
-    // When served over HTTP/HTTPS, relative URL '' works automatically on ANY port (5000, 3000, etc.)
     baseUrl: (typeof window !== 'undefined' && window.location.protocol.startsWith('http'))
         ? ''
         : 'http://localhost:5000',
 
     activeFallbackUrl: null,
 
-    /**
-     * Core Fetch Wrapper with Automatic Local Fallback & Informative Diagnostics
-     */
     async request(endpoint, options = {}) {
         let base = this.activeFallbackUrl || this.baseUrl;
         let url = `${base}${endpoint}`;
@@ -20,7 +16,7 @@ const ApiService = {
 
         const config = {
             ...options,
-            credentials: 'include', // Vital for session cookie persistence
+            credentials: 'include',
             headers: {
                 ...defaultHeaders,
                 ...(options.headers || {})
@@ -30,7 +26,6 @@ const ApiService = {
         try {
             return await this._executeFetch(url, config, options);
         } catch (initialError) {
-            // If on file:// protocol and 5000 failed, attempt fallback to port 3000
             if (window.location.protocol === 'file:' && !this.activeFallbackUrl) {
                 try {
                     const fallbackUrl = 'http://localhost:3000' + endpoint;
@@ -38,7 +33,6 @@ const ApiService = {
                     this.activeFallbackUrl = 'http://localhost:3000';
                     return fallbackResult;
                 } catch (fallbackError) {
-                    // Both ports unreachable
                     throw new Error('Library server is not running. Please open your project folder in terminal, run "npm start", and access http://localhost:5000 in your browser.');
                 }
             }
@@ -62,7 +56,6 @@ const ApiService = {
         }
 
         if (!response.ok) {
-            // Let the app shell know when a session is no longer valid
             if (response.status === 401 && typeof window !== 'undefined' && !url.includes('/api/auth/login')) {
                 window.dispatchEvent(new CustomEvent('auth:required'));
             }
@@ -79,7 +72,6 @@ const ApiService = {
         return data;
     },
 
-    // HTTP Helper Methods
     get(endpoint, params = null) {
         let url = endpoint;
         if (params) {
@@ -116,11 +108,7 @@ const ApiService = {
         });
     },
 
-    // ================================================================
-    // DOMAIN API ENDPOINTS
-    // ================================================================
 
-    // Authentication Services
     auth: {
         login(username, password) {
             return ApiService.post('/api/auth/login', { username, password });
@@ -133,7 +121,6 @@ const ApiService = {
         }
     },
 
-    // Dashboard & Reports Services
     reports: {
         getDashboard() {
             return ApiService.get('/api/reports/dashboard');
@@ -150,7 +137,6 @@ const ApiService = {
         }
     },
 
-    // Book Management Services
     books: {
         getAll(filters = {}) {
             return ApiService.get('/api/books', filters);
@@ -172,7 +158,6 @@ const ApiService = {
         }
     },
 
-    // Member Management Services
     members: {
         getAll(filters = {}) {
             return ApiService.get('/api/members', filters);
@@ -191,7 +176,6 @@ const ApiService = {
         }
     },
 
-    // Circulation & Loan Services
     loans: {
         getAll(filters = {}) {
             return ApiService.get('/api/loans', filters);
@@ -213,7 +197,6 @@ const ApiService = {
         }
     },
 
-    // Staff & System Services
     system: {
         getStaff() {
             return ApiService.get('/api/staff');

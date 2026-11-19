@@ -226,7 +226,6 @@ The test suite automatically tests:
 KRMU Library/
 ├── server.js                  Express app + MongoDB startup
 ├── routes/api.js              REST API (async MongoDB handlers)
-├── middleware/auth.js         Session / role guards
 ├── database/
 │   ├── db.js                  Mongo connection, indexes, seeds, counters
 │   ├── mongodb_schema.md      Document model & index reference

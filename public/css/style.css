@@ -1,5 +1,4 @@
 :root {
-    /* Primary Colors - Deep Academic Navy */
     --primary-900: #0f172a;
     --primary-800: #1e293b;
     --primary-700: #1e3a8a;
@@ -8,14 +7,12 @@
     --primary-100: #dbeafe;
     --primary-50:  #eff6ff;
 
-    /* Accent Colors - Library Emerald Green */
     --accent-700: #047857;
     --accent-600: #059669;
     --accent-500: #10b981;
     --accent-100: #d1fae5;
     --accent-50:  #ecfdf5;
 
-    /* Status Colors */
     --danger-600: #dc2626;
     --danger-500: #ef4444;
     --danger-100: #fee2e2;
@@ -26,7 +23,6 @@
     --warning-100: #fef3c7;
     --warning-50:  #fffbeb;
 
-    /* Neutrals */
     --bg-main:    #f8fafc;
     --bg-card:    #ffffff;
     --bg-subtle:  #f1f5f9;
@@ -37,7 +33,6 @@
     --text-muted:   #64748b;
     --text-light:   #94a3b8;
 
-    /* Layout metrics */
     --sidebar-width: 250px;
     --sidebar-collapsed-width: 72px;
     --header-height: 64px;
@@ -49,7 +44,6 @@
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
 }
 
-/* Base Reset & Typography */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -65,7 +59,6 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
-/* App Shell Layout */
 .app-container {
     display: flex;
     min-height: 100vh;
@@ -75,9 +68,6 @@ body {
     display: none !important;
 }
 
-/* ====================================================================
-   LOGIN GATE (full-screen staff sign-in)
-   ==================================================================== */
 body.is-locked {
     overflow: hidden;
 }
@@ -110,7 +100,6 @@ body.is-locked {
     box-shadow: 0 30px 80px rgba(2, 6, 23, 0.55);
 }
 
-/* Left brand panel */
 .login-gate-intro {
     position: relative;
     display: flex;
@@ -207,7 +196,6 @@ body.is-locked {
     color: #94a3b8;
 }
 
-/* Right form panel */
 .login-gate-form-wrap {
     display: flex;
     flex-direction: column;
@@ -367,9 +355,6 @@ body.is-locked {
     text-align: center;
 }
 
-/* ====================================================================
-   SIDEBAR NAVIGATION
-   ==================================================================== */
 .sidebar {
     width: var(--sidebar-width);
     background-color: var(--primary-900);
@@ -557,9 +542,6 @@ body.is-locked {
     font-weight: 500;
 }
 
-/* ====================================================================
-   MAIN CONTENT AREA & TOPBAR
-   ==================================================================== */
 .main-wrapper {
     flex: 1;
     margin-left: var(--sidebar-width);
@@ -678,7 +660,6 @@ body.is-locked {
     border-color: #94a3b8;
 }
 
-/* Institutional Badge in Topbar */
 .topbar-inst-badge {
     display: flex;
     align-items: center;
@@ -725,7 +706,6 @@ body.is-locked {
     color: var(--text-muted);
 }
 
-/* Modal Institutional Header */
 .modal-inst-header {
     display: flex;
     align-items: center;
@@ -760,7 +740,6 @@ body.is-locked {
     margin-top: 2px;
 }
 
-/* Viva University Banner */
 .viva-university-banner {
     background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
     border-radius: var(--radius-lg);
@@ -840,7 +819,6 @@ body.is-locked {
     color: #ffffff;
 }
 
-/* Page Body Container */
 .page-container {
     flex: 1;
     padding: 1.75rem;
@@ -877,9 +855,6 @@ body.is-locked {
     gap: 0.6rem;
 }
 
-/* ====================================================================
-   BUTTONS & CONTROLS
-   ==================================================================== */
 .btn {
     display: inline-flex;
     align-items: center;
@@ -954,9 +929,6 @@ body.is-locked {
     height: 14px;
 }
 
-/* ====================================================================
-   METRIC / STAT CARDS
-   ==================================================================== */
 .metrics-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -1036,9 +1008,6 @@ body.is-locked {
 .stat-icon.red { background-color: var(--danger-100); color: var(--danger-600); }
 .stat-icon.slate { background-color: #f1f5f9; color: #475569; }
 
-/* ====================================================================
-   DASHBOARD PANELS & SECTION LAYOUT
-   ==================================================================== */
 .dashboard-grid {
     display: grid;
     grid-template-columns: 2fr 1fr;
@@ -1086,9 +1055,6 @@ body.is-locked {
     padding: 0;
 }
 
-/* ====================================================================
-   DATA TABLES & ROWS
-   ==================================================================== */
 .table-responsive {
     width: 100%;
     overflow-x: auto;
@@ -1128,11 +1094,6 @@ body.is-locked {
     background-color: #fbfcfe;
 }
 
-/* --------------------------------------------------------------------
-   COMPACT FIXED TABLES (Books Catalog / Members Directory)
-   Fixed column widths keep the Actions column on screen — no sideways
-   scrolling is needed to edit or delete a record.
-   -------------------------------------------------------------------- */
 .table-fixed {
     table-layout: fixed;
     width: 100%;
@@ -1158,7 +1119,6 @@ body.is-locked {
     max-width: 100%;
 }
 
-/* Allow long category / type labels to wrap inside their pill */
 .badge-fit {
     white-space: normal;
     text-align: left;
@@ -1232,7 +1192,6 @@ body.is-locked {
     font-size: 0.78rem;
 }
 
-/* Action buttons wrap gracefully instead of pushing the table wider */
 .table-actions {
     display: flex;
     flex-wrap: wrap;
@@ -1246,8 +1205,6 @@ body.is-locked {
     font-size: 0.72rem;
 }
 
-/* On tablets/phones fall back to a horizontally scrollable table
-   rather than squeezing columns into unreadable slivers. */
 @media (max-width: 900px) {
     .table-fixed {
         table-layout: auto;
@@ -1255,7 +1212,6 @@ body.is-locked {
     }
 }
 
-/* Table Pagination */
 .table-pagination {
     display: flex;
     align-items: center;
@@ -1286,7 +1242,6 @@ body.is-locked {
     text-align: center;
 }
 
-/* Status Badges */
 .badge {
     display: inline-flex;
     align-items: center;
@@ -1335,7 +1290,6 @@ body.is-locked {
 }
 .badge-primary .badge-dot { background-color: var(--primary-600); }
 
-/* Quick Action Bar / Filters */
 .filter-bar {
     background-color: #ffffff;
     border: 1px solid var(--border-subtle);
@@ -1396,9 +1350,6 @@ body.is-locked {
     border-color: var(--primary-600);
 }
 
-/* ====================================================================
-   ACTIVITY FEED & TIMELINE
-   ==================================================================== */
 .activity-list {
     list-style: none;
 }
@@ -1447,9 +1398,6 @@ body.is-locked {
     gap: 0.5rem;
 }
 
-/* ====================================================================
-   MODALS & DIALOGS
-   ==================================================================== */
 .modal-backdrop {
     position: fixed;
     top: 0;
@@ -1534,7 +1482,6 @@ body.is-locked {
     border-bottom-right-radius: var(--radius-lg);
 }
 
-/* Form Styles */
 .form-group {
     margin-bottom: 1.1rem;
 }
@@ -1590,11 +1537,6 @@ body.is-locked {
     display: block;
 }
 
-/* --------------------------------------------------------------------
-   SEARCHABLE BOOK PICKER (Issue Desk)
-   Native <select> popups clip long book titles, so the picker renders
-   the full title on a wrapped row instead.
-   -------------------------------------------------------------------- */
 .card-picker-host {
     overflow: visible;
 }
@@ -1740,7 +1682,6 @@ body.is-locked {
     text-align: center;
 }
 
-/* Toast Notifications */
 .toast-container {
     position: fixed;
     bottom: 1.5rem;
@@ -1795,7 +1736,6 @@ body.is-locked {
     }
 }
 
-/* Empty State */
 .empty-state {
     padding: 3rem 1.5rem;
     text-align: center;
@@ -1819,7 +1759,6 @@ body.is-locked {
     font-size: 0.825rem;
 }
 
-/* Detail Slip / Receipt preview */
 .slip-box {
     background: #f8fafc;
     border: 1px dashed #cbd5e1;
@@ -1839,7 +1778,6 @@ body.is-locked {
     margin-bottom: 0.5rem;
 }
 
-/* Responsive adjustments */
 @media (max-width: 992px) {
     .dashboard-grid {
         grid-template-columns: 1fr;
@@ -1908,7 +1846,6 @@ body.is-locked {
     }
 }
 
-/* Login gate responsive layout */
 @media (max-width: 900px) {
     .login-gate {
         padding: 1.25rem;
@@ -1969,7 +1906,6 @@ body.is-locked {
     }
 }
 
-/* Print styles for official library reports & slips */
 @media print {
     .sidebar, .topbar, .btn-viva-helper, .page-actions, .filter-bar, .toast-container {
         display: none !important;

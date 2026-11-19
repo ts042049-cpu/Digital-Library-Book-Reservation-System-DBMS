@@ -1,12 +1,3 @@
-/**
- * REST API Routes for KRMU Library — MongoDB edition
- * Handles Authentication, Books, Members, Circulation, Reports and Overdue
- * management. All handlers are async and talk to MongoDB through the
- * shared data layer in database/db.js.
- *
- * Response contracts (field names, date formats) are identical to the
- * previous SQLite implementation so the frontend needs no changes.
- */
 
 const express = require('express');
 const router = express.Router();
@@ -29,10 +20,6 @@ const {
 
 const collection = (name) => getDb().collection(name);
 
-// ====================================================================
-// SHARED SERIALIZATION HELPERS
-// ====================================================================
-/** Remove MongoDB's internal _id and keep the public document shape. */
 function publicDoc(doc) {
     if (!doc) return doc;
     const { _id, ...rest } = doc;
@@ -61,9 +48,6 @@ async function staffMapFor(ids) {
     return new Map(docs.map((doc) => [doc.staff_id, doc]));
 }
 
-// ====================================================================
-// CSV IMPORT HELPERS
-// ====================================================================
 const BOOK_CSV_COLUMNS = {
     isbn: ['isbn', 'isbn_13', 'isbn13', 'isbn_10', 'isbn10'],
     title: ['title', 'book_title', 'book_name', 'name'],
@@ -105,7 +89,6 @@ function detectCsvDelimiter(text) {
     return best;
 }
 
-/** RFC 4180-style parser: handles quoted fields, escaped quotes and CRLF. */
 function parseCsvRows(text, delimiter = ',') {
     const rows = [];
     const source = String(text).replace(/^\uFEFF/, '');
@@ -141,7 +124,6 @@ function parseCsvRows(text, delimiter = ',') {
             row = [];
             field = '';
         } else if (char === '\r') {
-            // Ignore CR; the following LF ends the row.
         } else {
             field += char;
         }
@@ -165,10 +147,6 @@ function mapCsvColumns(headers) {
     return mapping;
 }
 
-/**
- * Join loans with their book / member / staff documents. Produces the same
- * flat row shape the SQLite JOIN queries returned.
- */
 async function hydrateLoans(loans, { includeBookStock = false } = {}) {
     if (!loans.length) return [];
 
@@ -219,11 +197,7 @@ async function activeStaff(req, requestedId) {
     return collection('staffs').findOne({ status: 'Active' }, { sort: { staff_id: 1 } });
 }
 
-// ====================================================================
-// 1. AUTHENTICATION & SESSION MANAGEMENT
-// ====================================================================
 
-// POST /api/auth/login
 router.post('/auth/login', async (req, res) => {
     try {
         const { username, password } = req.body;
@@ -248,7 +222,6 @@ router.post('/auth/login', async (req, res) => {
             });
         }
 
-        // Verify password using bcrypt or direct comparison for seed passwords
         let isMatch = false;
         if (staff.password.startsWith('$2a$') || staff.password.startsWith('$2b$')) {
             isMatch = bcrypt.compareSync(password, staff.password);
@@ -285,7 +258,6 @@ router.post('/auth/login', async (req, res) => {
     }
 });
 
-// GET /api/auth/me (Check current session)
 router.get('/auth/me', async (req, res) => {
     if (req.session && req.session.user) {
         return res.json({
@@ -317,7 +289,6 @@ router.get('/auth/me', async (req, res) => {
     }
 });
 
-// POST /api/auth/logout
 router.post('/auth/logout', (req, res) => {
     const staffName = req.session && req.session.user ? req.session.user.full_name : 'Staff';
     req.session.destroy(async (err) => {
@@ -330,10 +301,6 @@ router.post('/auth/logout', (req, res) => {
     });
 });
 
-// ====================================================================
-// 2. DASHBOARD & SUMMARY METRICS
-// Supports both /api/reports/dashboard AND /api/dashboard
-// ====================================================================
 async function getDashboardMetrics(req, res) {
     try {
         await refreshOverdueLoans();
@@ -367,7 +334,6 @@ async function getDashboardMetrics(req, res) {
         const overdue = overdueStats[0] || { count: 0, pending_fines: 0 };
         const fines = collectedFines[0] || { total_collected: 0 };
 
-        // Recently Issued Books (last 6 active loans)
         const recentLoanDocs = await collection('loans')
             .find({ return_date: null })
             .sort({ issue_date: -1, loan_id: -1 })
@@ -387,7 +353,6 @@ async function getDashboardMetrics(req, res) {
             member_email: loan.member_email
         }));
 
-        // Upcoming Due Dates / Overdue Alerts (due within 3 days or already late)
         const dueSoonLimit = addDays(today, 3);
         const dueSoonDocs = await collection('loans')
             .find({
@@ -412,7 +377,6 @@ async function getDashboardMetrics(req, res) {
             days_remaining: daysBetween(today, loan.due_date)
         }));
 
-        // Activity Logs
         const recentLogs = (await collection('auditlogs')
             .find({})
             .sort({ log_id: -1 })
@@ -426,7 +390,6 @@ async function getDashboardMetrics(req, res) {
                 timestamp: toDateTime(log.timestamp)
             }));
 
-        // Category breakdown
         const genreDistribution = (await collection('books').aggregate([
             {
                 $group: {
@@ -468,9 +431,6 @@ async function getDashboardMetrics(req, res) {
 router.get('/reports/dashboard', getDashboardMetrics);
 router.get('/dashboard', getDashboardMetrics);
 
-// ====================================================================
-// 3. BOOK MANAGEMENT
-// ====================================================================
 router.get('/books', async (req, res) => {
     try {
         const { search, genre, availability, sortBy = 'title', sortOrder = 'ASC', page, limit } = req.query;
@@ -505,7 +465,6 @@ router.get('/books', async (req, res) => {
         let perPage = total;
         let totalPages = 1;
 
-        // Paginate only when the client explicitly asks for a page or page size.
         if (page !== undefined || limit !== undefined) {
             perPage = Math.min(Math.max(parseInt(limit, 10) || 25, 1), 1000);
             totalPages = Math.max(1, Math.ceil(total / perPage));
@@ -516,7 +475,6 @@ router.get('/books', async (req, res) => {
 
         const bookDocs = await cursor.toArray();
 
-        // Pending reservation count per book (same as the SQL correlated subquery)
         const bookIds = bookDocs.map((b) => b.book_id);
         const reservationCounts = new Map();
         if (bookIds.length) {
@@ -592,9 +550,6 @@ router.get('/books/:id', async (req, res) => {
     }
 });
 
-// POST /api/books/import — bulk-create catalog titles from CSV text.
-// Required columns: ISBN, Title, Author. Optional: Publisher, Year,
-// Genre/Category, Total Copies (default 1), Shelf Location.
 router.post('/books/import', async (req, res) => {
     try {
         const csv = typeof req.body?.csv === 'string' ? req.body.csv : '';
@@ -676,7 +631,6 @@ router.post('/books/import', async (req, res) => {
             });
         }
 
-        // Skip any ISBN that already exists in the catalog (single query).
         let toInsert = candidates;
         if (candidates.length) {
             const existing = await collection('books')
@@ -713,7 +667,6 @@ router.post('/books/import', async (req, res) => {
                 imported = result.insertedCount;
             } catch (insertErr) {
                 if (!insertErr.writeErrors) throw insertErr;
-                // Some rows raced with another import: report what got in.
                 imported = insertErr.result?.nInserted ?? (docs.length - insertErr.writeErrors.length);
             }
         }
@@ -891,9 +844,6 @@ router.delete('/books/:id', async (req, res) => {
     }
 });
 
-// ====================================================================
-// 4. MEMBER MANAGEMENT
-// ====================================================================
 router.get('/members', async (req, res) => {
     try {
         const { search, status, type } = req.query;
@@ -1123,9 +1073,6 @@ router.delete('/members/:id', async (req, res) => {
     }
 });
 
-// ====================================================================
-// 5. CIRCULATION: ISSUE, RETURN & TRANSACTION LOGS
-// ====================================================================
 router.get('/loans', async (req, res) => {
     try {
         await refreshOverdueLoans();
@@ -1219,7 +1166,6 @@ router.post('/loans/issue', async (req, res) => {
             });
         }
 
-        // Atomic stock decrement — prevents two simultaneous issues from overselling.
         const decrement = await collection('books').findOneAndUpdate(
             { book_id: bookId, available_copies: { $gt: 0 } },
             { $inc: { available_copies: -1 } },
@@ -1265,7 +1211,6 @@ router.post('/loans/issue', async (req, res) => {
                 created_at: new Date()
             });
         } catch (insertErr) {
-            // Compensating rollback: give the copy back if the loan could not be saved.
             await collection('books').updateOne({ book_id: bookId }, { $inc: { available_copies: 1 } });
             throw insertErr;
         }
@@ -1345,7 +1290,6 @@ router.post('/loans/:id/return', async (req, res) => {
             }
         );
 
-        // Atomic stock restore, clamped to total_copies.
         await collection('books').updateOne(
             { book_id: loan.book_id },
             [{ $set: { available_copies: { $min: ['$total_copies', { $add: ['$available_copies', 1] }] } } }]
@@ -1421,10 +1365,6 @@ router.post('/loans/:id/renew', async (req, res) => {
     }
 });
 
-// ====================================================================
-// 6. OVERDUE MANAGEMENT & REPORTS
-// Supports both /api/reports/overdue AND /api/overdue
-// ====================================================================
 async function getOverdueList(req, res) {
     try {
         await refreshOverdueLoans();
@@ -1513,7 +1453,6 @@ router.post('/overdue/remind/:id', async (req, res) => {
     }
 });
 
-// CSV Export Endpoint for Reports
 router.get('/reports/export', async (req, res) => {
     try {
         const loanDocs = await collection('loans').find({}).sort({ loan_id: -1 }).toArray();
@@ -1610,7 +1549,6 @@ router.get('/reports', async (req, res) => {
             }
         }
 
-        // If fewer than 5 books have ever circulated, fill with unused titles (LEFT JOIN semantics)
         if (popularBooks.length < 5) {
             const usedIds = borrowCounts.map((row) => row._id);
             const idleBooks = await collection('books')
@@ -1669,7 +1607,6 @@ router.get('/reports', async (req, res) => {
     }
 });
 
-// Staff accounts list
 router.get('/staff', async (req, res) => {
     try {
         const staffList = await collection('staffs')
@@ -1692,7 +1629,6 @@ router.get('/staff', async (req, res) => {
     }
 });
 
-// Pristine Demo Reset
 router.post('/system/reset-demo-data', async (req, res) => {
     try {
         await resetDemoData();

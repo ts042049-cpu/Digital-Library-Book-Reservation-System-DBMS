@@ -37,7 +37,6 @@
             overflow-x: hidden;
         }
 
-        /* Ambient animated blobs */
         .ambient-blob-1 {
             position: absolute;
             width: 450px;
@@ -69,7 +68,6 @@
             100% { transform: scale(1.15) translate(30px, -20px); opacity: 1; }
         }
 
-        /* Top Bar */
         .login-topbar {
             padding: 1.25rem 2rem;
             display: flex;
@@ -165,7 +163,6 @@
             50% { opacity: 0.4; transform: scale(0.85); }
         }
 
-        /* Main Content Layout */
         .login-main {
             flex: 1;
             display: flex;
@@ -185,7 +182,6 @@
             align-items: center;
         }
 
-        /* Left Info / Hero Column */
         .login-hero-col {
             padding-right: 1rem;
         }
@@ -286,7 +282,6 @@
             font-size: 0.82rem;
         }
 
-        /* Right Card Container */
         .login-card {
             background: var(--login-card-bg);
             border: 1px solid var(--login-card-border);
@@ -298,7 +293,6 @@
             position: relative;
         }
 
-        /* Active Session Warning / Quick Jump */
         #active-session-banner {
             display: none;
             background: rgba(37, 99, 235, 0.15);
@@ -320,7 +314,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Segmented Tabs */
         .portal-tabs {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -365,7 +358,6 @@
             background: rgba(255, 255, 255, 0.04);
         }
 
-        /* Form Styles */
         .auth-form-group {
             margin-bottom: 1.25rem;
         }
@@ -517,7 +509,6 @@
             cursor: not-allowed;
         }
 
-        /* Alert Notification inside card */
         .auth-alert {
             padding: 0.75rem 1rem;
             border-radius: 8px;
@@ -546,7 +537,6 @@
             color: #6ee7b7;
         }
 
-        /* Quick Demo Staff Logins */
         .demo-logins-section {
             margin-top: 1.75rem;
             padding-top: 1.25rem;
@@ -604,7 +594,6 @@
             color: #94a3b8;
         }
 
-        /* Member Verification Tab Specifics */
         .member-result-card {
             display: none;
             background: rgba(15, 23, 42, 0.8);
@@ -647,7 +636,6 @@
             text-transform: uppercase;
         }
 
-        /* Card Policy Footer */
         .card-policy-footer {
             margin-top: 1.5rem;
             text-align: center;
@@ -667,7 +655,6 @@
             color: #60a5fa;
         }
 
-        /* Global Footer */
         .login-footer {
             padding: 1.5rem 2rem;
             border-top: 1px solid rgba(255, 255, 255, 0.06);
@@ -697,7 +684,6 @@
             color: #ffffff;
         }
 
-        /* Modal Backdrop for Help / Forgot Password */
         .login-modal-overlay {
             position: fixed;
             top: 0;
@@ -756,7 +742,6 @@
             color: #fff;
         }
 
-        /* Responsive Breakpoints */
         @media (max-width: 900px) {
             .login-container {
                 grid-template-columns: 1fr;
@@ -794,11 +779,9 @@
 </head>
 <body class="login-page-body">
 
-    <!-- Ambient glowing visual blobs -->
     <div class="ambient-blob-1"></div>
     <div class="ambient-blob-2"></div>
 
-    <!-- Top Navigation Bar -->
     <header class="login-topbar">
         <a href="index.html" class="login-brand" title="K.R. Mangalam University Central Library">
             <img src="images/logo-transparent.png" alt="K.R. Mangalam University Logo" class="login-brand-logo">
@@ -830,11 +813,9 @@
         </div>
     </header>
 
-    <!-- Main Content Container -->
     <main class="login-main">
         <div class="login-container">
             
-            <!-- Left Info / Institutional Highlight Column -->
             <div class="login-hero-col">
                 <div class="hero-badge">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="width:16px;height:16px;">
@@ -895,10 +876,8 @@
                 </div>
             </div>
 
-            <!-- Right Glassmorphism Authentication Box -->
             <div class="login-card">
                 
-                <!-- Existing Active Session Alert -->
                 <div id="active-session-banner">
                     <div style="display:flex; align-items:center; justify-content:space-between;">
                         <div>
@@ -912,7 +891,6 @@
                     </div>
                 </div>
 
-                <!-- Tab Switcher -->
                 <div class="portal-tabs">
                     <button class="portal-tab-btn active" id="tab-btn-staff" onclick="LoginPage.switchTab('staff')">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -928,13 +906,11 @@
                     </button>
                 </div>
 
-                <!-- Notification Alerts -->
                 <div class="auth-alert" id="auth-alert-box">
                     <span id="auth-alert-icon"></span>
                     <span id="auth-alert-text"></span>
                 </div>
 
-                <!-- TAB 1: STAFF LOGIN FORM -->
                 <div id="portal-staff-view">
                     <form id="login-staff-form" onsubmit="LoginPage.submitStaffLogin(event)">
                         
@@ -987,7 +963,6 @@
                         </button>
                     </form>
 
-                    <!-- Quick 1-Click Demo Profiles for Viva & Testing -->
                     <div class="demo-logins-section">
                         <div class="demo-logins-title">
                             <span>Quick Demo Logins (Click to Autofill & Login)</span>
@@ -1010,7 +985,6 @@
                     </div>
                 </div>
 
-                <!-- TAB 2: STUDENT & CARDHOLDER VERIFICATION -->
                 <div id="portal-member-view" style="display:none;">
                     <p style="font-size:0.85rem; color:#94a3b8; line-height:1.5; margin-bottom:1.25rem;">
                         Students, Faculty, and Research scholars can check borrowing quota, active book loans, and fine status using their Library Card ID or University Email.
@@ -1035,7 +1009,6 @@
                         </button>
                     </form>
 
-                    <!-- Quick member demo chips -->
                     <div style="margin-top:1.25rem;">
                         <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.06em; color:#64748b; font-weight:700; margin-bottom:0.5rem;">
                             Demo Student & Faculty Cards
@@ -1053,7 +1026,6 @@
                         </div>
                     </div>
 
-                    <!-- Dynamic Cardholder Result -->
                     <div class="member-result-card" id="member-result-box">
                         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem;">
                             <div>
@@ -1084,7 +1056,6 @@
                     </div>
                 </div>
 
-                <!-- Terms and Privacy Footer Note -->
                 <div class="card-policy-footer">
                     By accessing the portal, you agree to the University Central Library 
                     <a href="terms.html">Terms of Service & Borrowing Regulations</a> and 
@@ -1095,7 +1066,6 @@
         </div>
     </main>
 
-    <!-- Global Footer -->
     <footer class="login-footer">
         <div>
             &copy; 2026 K.R. Mangalam University &bull; Central Academic Library LMS
@@ -1108,7 +1078,6 @@
         </div>
     </footer>
 
-    <!-- Help & Support / Forgot Password Modal -->
     <div class="login-modal-overlay" id="help-modal">
         <div class="login-modal-box">
             <div class="login-modal-header">
@@ -1136,7 +1105,6 @@
         </div>
     </div>
 
-    <!-- Page Logic Script -->
     <script src="js/api.js"></script>
     <script>
         const LoginPage = {
@@ -1279,7 +1247,6 @@
 
                     this.showAlert(`Welcome back, ${res.user.full_name}! Redirecting to dashboard...`, 'success');
 
-                    // Smooth redirect to main dashboard
                     setTimeout(() => {
                         const params = new URLSearchParams(window.location.search);
                         const returnUrl = params.get('redirect') || 'index.html';
