@@ -62,7 +62,7 @@ app.use((req, res, next) => {
 });
 
 // Automatically ensure MongoDB is connected before processing API requests (critical for Vercel/serverless)
-app.use('/api', async (req, res, next) => {
+const ensureDb = async (req, res, next) => {
     try {
         await connect();
         next();
@@ -74,9 +74,19 @@ app.use('/api', async (req, res, next) => {
             error: err.message
         });
     }
-});
+};
 
-app.use('/api', apiRoutes);
+app.use('/api', ensureDb, apiRoutes);
+
+// Fallback for Vercel serverless functions if /api prefix is stripped by edge rewrites
+app.use((req, res, next) => {
+    if (req.url.startsWith('/api') || req.url.startsWith('/css') || req.url.startsWith('/js') || req.url.startsWith('/images') || req.url.startsWith('/assets') || req.url === '/' || req.url.startsWith('/login') || req.url.startsWith('/terms')) {
+        return next();
+    }
+    ensureDb(req, res, () => {
+        apiRoutes(req, res, next);
+    });
+});
 
 app.all('/api/*', (req, res) => {
     res.status(404).json({
