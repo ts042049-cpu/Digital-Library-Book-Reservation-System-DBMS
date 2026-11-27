@@ -1,15 +1,16 @@
 ﻿# KRMU Library — Integrated Full-Stack Library Management System
 
 > **K.R. Mangalam University Library Circulation Desk & DBMS Project**  
-> Developed for Academic Evaluation & Project Viva Demonstration  
-> **Student:** Tushar Saini (Roll No: 2501730053)  
+> **Student:** Tushar Saini (Roll No: 2501730053), Shivansh Dahiya(2501730145)
 > **Tech Stack:** Node.js, Express, Session Auth, MongoDB, Vanilla HTML5, CSS3 & Modern JavaScript
 
 ---
 
 ## 📌 1. Project Overview
 
-**KRMU Library** is a complete, fully integrated full-stack Library Management System. The application pairs an authentic, human-designed frontend with a robust Node.js/Express backend running at `http://localhost:5000`.
+**KRMU Library** is a complete, fully integrated full-stack Library Management System. The application pairs an authentic, human-designed frontend with a robust Node.js/Express backend.
+
+Live Deploy Link: https://digital-library-book-reservation-sy.vercel.app/
 
 All frontend components communicate with backend API endpoints through a centralized, reusable API service layer (`public/js/api.js`) using `credentials: "include"` for session-based cookie authentication. Data is persisted in **MongoDB** through the official Node.js driver (`database/db.js`); the document model is documented in [`database/mongodb_schema.md`](database/mongodb_schema.md).
 
